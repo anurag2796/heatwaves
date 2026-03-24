@@ -1,11 +1,10 @@
 ###############################################################################
 # 06_linear_mixed_models.R
 # Reproduction of Previtali et al. (2026)
-# Section 7: Linear Mixed Models for Impact Assessment
+# Section 7: Linear Mixed Models & Non-parametric Fallbacks
 ###############################################################################
 
 load("output/01_data_loaded.RData")
-load("output/02_phenology.RData")
 load("output/04_clusters.RData")
 
 suppressPackageStartupMessages({
@@ -18,288 +17,157 @@ suppressPackageStartupMessages({
 
 cat("=== Section 7: Linear Mixed Models ===\n\n")
 
-# --- LIMITATION: Unmeasured management confounders -------------------------
-# Irrigation, canopy management, and fruit thinning vary by block and year
-# and are absent from the dataset. The LMM random intercept partially absorbs
-# baseline block differences but cannot remove within-block year-to-year
-# management variation.
-
-# --- 7a. Data attribution: merge cluster labels into block-level data ------
-
-# cluster_assignments has: site_year, Site, Season, cluster
-# DB3 has: Site, Block_ID, Season, Avg_Harvest_DOY, Yield_tha
-
-# Merge cluster into yield/harvest data
+# --- 7a. Data attribution: merge cluster labels ---
 yield_data <- db3_data %>%
-  left_join(cluster_assignments %>% select(Site, Season, cluster),
+  left_join(site_year_pheno %>% select(Site, Season, cluster),
             by = c("Site", "Season")) %>%
   filter(!is.na(cluster))
 
 cat("Yield data with cluster labels:", nrow(yield_data), "block-year observations\n")
 
 # Filter: only blocks with >= 2 observations across >= 2 different clusters
-block_eligibility <- yield_data %>%
-  filter(!is.na(Yield_tha) | !is.na(Avg_Harvest_DOY)) %>%
-  group_by(Site, Block_ID) %>%
-  summarise(
-    n_obs = n(),
-    n_clusters = n_distinct(cluster),
-    .groups = "drop"
-  ) %>%
-  filter(n_obs >= 2, n_clusters >= 2)
+block_elig <- yield_data %>%
+  group_by(block_ID = Block_ID) %>%
+  summarise(n_obs = n(), n_clust = n_distinct(cluster), .groups = "drop")
 
-cat("Eligible blocks (>= 2 obs, >= 2 clusters):", nrow(block_eligibility), "\n")
+eligible_blocks <- block_elig %>% filter(n_obs >= 2, n_clust >= 2) %>% pull(block_ID)
+cat("Eligible blocks (>= 2 obs, >= 2 clusters):", length(eligible_blocks), "\n")
 
-yield_filtered <- yield_data %>%
-  semi_join(block_eligibility, by = c("Site", "Block_ID"))
+yield_filtered <- yield_data %>% filter(Block_ID %in% eligible_blocks) %>% rename(block_ID = Block_ID)
 
-cat("Filtered observations:", nrow(yield_filtered), "\n\n")
-
-# Merge cluster into fruit composition data
-comp_data <- db4_data %>%
-  left_join(cluster_assignments %>% select(Site, Season, cluster),
+# Fruit Composition data
+fruit_data <- db4_data %>%
+  left_join(site_year_pheno %>% select(Site, Season, cluster),
             by = c("Site", "Season")) %>%
   filter(!is.na(cluster))
 
-# LIMITATION: Small biochemical sample — DB4 spans only 2017-2023 (7 seasons).
-# All 12-analyte LMMs rest on far fewer observations than the 42-year yield
-# and harvest analyses. Report with proportionally wider confidence intervals.
-cat("Fruit composition data with cluster labels:", nrow(comp_data), "obs\n")
-cat("LIMITATION: Small biochemical sample (2017-2023 only, 7 seasons)\n\n")
+# SAFE RENAMING: Bypasses MacOS/Terminal Unicode encoding issues
+names(fruit_data)[grepl("Damascenone", names(fruit_data), ignore.case = TRUE)] <- "B_Damascenone"
+names(fruit_data)[grepl("Octen", names(fruit_data), ignore.case = TRUE)] <- "Octen_3_ol"
+names(fruit_data)[grepl("C6", names(fruit_data), ignore.case = TRUE)] <- "C6_compounds"
+names(fruit_data)[grepl("anthocyanins", names(fruit_data), ignore.case = TRUE)] <- "Total_anthocyanins"
+names(fruit_data)[grepl("tannins", names(fruit_data), ignore.case = TRUE)] <- "Polymeric_tannins"
+names(fruit_data)[grepl("Quercetin", names(fruit_data), ignore.case = TRUE)] <- "Quercetin_glycosides"
+names(fruit_data)[grepl("moisture", names(fruit_data), ignore.case = TRUE)] <- "Berry_moisture"
+names(fruit_data)[grepl("Malic", names(fruit_data), ignore.case = TRUE)] <- "Malic_acid"
+names(fruit_data)[names(fruit_data) == "Block_ID"] <- "block_ID"
 
-# --- 7b. Helper function: run LMM with assumption checks -------------------
+cat("Fruit composition data with cluster labels:", nrow(fruit_data), "obs\n")
 
-run_lmm_with_checks <- function(response_var, data, formula_str = NULL) {
-  # response_var: column name (string)
-  # Returns list with model results, assumption tests, post-hoc
-
-  cat(sprintf("\n--- LMM: %s ---\n", response_var))
-
-  # Prepare data — drop NA for this response
-  df <- data %>%
-    filter(!is.na(.data[[response_var]])) %>%
-    mutate(
-      cluster  = factor(cluster, levels = c("C3", "C1", "C2")),  # C3 as reference
-      block_ID = factor(paste(Site, Block_ID, sep = "_"))
-    )
-
-  cat(sprintf("  Observations: %d, Blocks: %d\n", nrow(df), n_distinct(df$block_ID)))
-  cat(sprintf("  Per cluster: C1=%d, C2=%d, C3=%d\n",
-              sum(df$cluster == "C1"), sum(df$cluster == "C2"), sum(df$cluster == "C3")))
-
-  # Check if enough data
-  if (nrow(df) < 10 || n_distinct(df$cluster) < 2) {
-    cat("  SKIPPED: insufficient data\n")
+# --- 7b. Unified Modeling Function (LMM with Non-parametric Fallback) ---
+run_model <- function(var_name, df) {
+  cat(sprintf("\n--- Model: %s ---\n", var_name))
+  
+  if (!var_name %in% names(df)) {
+    cat("  [ERROR] Variable not found in data frame.\n")
     return(NULL)
   }
-
-  # Try LMM first
-  use_parametric <- TRUE
-
-  tryCatch({
-    model <- lmer(as.formula(paste(response_var, "~ cluster + (1 | block_ID)")),
-                  data = df)
-
-    # Assumption tests
-    resids <- residuals(model)
-
-    # Shapiro-Wilk (normality) — sample max 5000
-    if (length(resids) > 5000) {
-      shap_test <- shapiro.test(sample(resids, 5000))
-    } else {
-      shap_test <- shapiro.test(resids)
-    }
-    cat(sprintf("  Shapiro-Wilk: W=%.4f, p=%.4f", shap_test$statistic, shap_test$p.value))
-
-    # Levene's test (homoscedasticity)
-    lev_test <- leveneTest(as.formula(paste(response_var, "~ cluster")), data = df)
-    lev_p <- lev_test$`Pr(>F)`[1]
-    cat(sprintf("  |  Levene: F=%.2f, p=%.4f\n", lev_test$`F value`[1], lev_p))
-
-    if (shap_test$p.value < 0.05 || lev_p < 0.05) {
-      cat("  => Assumptions VIOLATED. Switching to nonparametric.\n")
-      use_parametric <- FALSE
-    } else {
-      cat("  => Assumptions MET. Using LMM.\n")
-    }
-  }, error = function(e) {
-    cat(sprintf("  LMM failed: %s\n", e$message))
-    cat("  => Switching to nonparametric.\n")
-    use_parametric <<- FALSE
-  })
-
-  results <- list(
-    variable = response_var,
-    parametric = use_parametric,
-    means = tapply(df[[response_var]], df$cluster, mean, na.rm = TRUE)
-  )
-
-  if (use_parametric) {
-    model <- lmer(as.formula(paste(response_var, "~ cluster + (1 | block_ID)")),
-                  data = df)
-    results$model_summary <- summary(model)
-
-    # Tukey post-hoc
-    emm <- emmeans(model, pairwise ~ cluster, adjust = "tukey")
-    results$emmeans <- emm
-    cat("\n  Estimated marginal means:\n")
-    print(summary(emm$emmeans))
-    cat("\n  Pairwise comparisons:\n")
-    print(summary(emm$contrasts))
-  } else {
-    cat("  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...\n")
-    if (!requireNamespace("brms", quietly = TRUE)) {
-      install.packages("brms", repos = "https://cloud.r-project.org")
-    }
-    library(brms)
-    
-    # Use Student-t family to handle outliers and heavy tails in truncated datasets
-    bayesian_model <- brm(
-      formula = as.formula(paste(response_var, "~ cluster + (1 | block_ID)")),
-      data = df,
-      family = student(), 
-      prior = c(
-        prior(normal(0, 10), class = "b") # Shrinkage prior to stabilize cluster fixed-effects
-      ),
-      chains = 4, 
-      iter = 2000, 
-      warmup = 500,
-      control = list(adapt_delta = 0.95),
-      refresh = 0
-    )
-    
-    results$bayesian_model <- summary(bayesian_model)
-    cat("\n  Bayesian model summary:\n")
-    print(results$bayesian_model)
-    
-    # Extract estimated marginal means using the Bayesian model
-    emm <- emmeans(bayesian_model, pairwise ~ cluster)
-    results$emmeans <- emm
-    cat("\n  Bayesian estimated marginal means:\n")
-    print(summary(emm$emmeans))
-    cat("\n  Bayesian pairwise comparisons:\n")
-    print(summary(emm$contrasts))
+  
+  df_sub <- df %>% filter(!is.na(.data[[var_name]]))
+  if(nrow(df_sub) < 10) {
+    cat("  [SKIP] Not enough data points.\n")
+    return(NULL)
   }
-
-  # Group means
-  cat("\n  Group means:\n")
-  grp_means <- df %>%
-    group_by(cluster) %>%
+  
+  cat("  Observations:", nrow(df_sub), ", Blocks:", n_distinct(df_sub$block_ID), "\n")
+  cat(sprintf("  Per cluster: C1=%d, C2=%d, C3=%d\n", 
+              sum(df_sub$cluster == "C1"), sum(df_sub$cluster == "C2"), sum(df_sub$cluster == "C3")))
+  
+  # Separate formulas: one for Mixed Model, one for simple tests
+  f_lmm <- as.formula(paste(var_name, "~ cluster + (1 | block_ID)"))
+  f_simple <- as.formula(paste(var_name, "~ cluster"))
+  
+  # Try fitting LMM to test assumptions
+  mod <- tryCatch(lmer(f_lmm, data = df_sub), error = function(e) NULL)
+  
+  if (is.null(mod)) {
+    cat("  => LMM failed to converge. Switching to nonparametric (Kruskal-Wallis).\n")
+    assumption_failed <- TRUE
+  } else {
+    res <- residuals(mod)
+    sw <- shapiro.test(res[sample(length(res), min(5000, length(res)))])
+    
+    # CRITICAL FIX: Pass the simple formula without random effects to leveneTest
+    lev <- leveneTest(f_simple, data = df_sub)
+    
+    cat(sprintf("  Shapiro-Wilk: W=%.4f, p=%.4f  |  Levene: F=%.2f, p=%.4f\n", 
+                sw$statistic, sw$p.value, lev$`F value`[1], lev$`Pr(>F)`[1]))
+    
+    assumption_failed <- (sw$p.value < 0.05 || lev$`Pr(>F)`[1] < 0.05)
+  }
+  
+  # Check assumptions (alpha = 0.05)
+  if(assumption_failed) {
+    cat("  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).\n")
+    
+    kw <- kruskal.test(f_simple, data = df_sub)
+    cat(sprintf("  Kruskal-Wallis test: chi-squared = %.2f, p = %.4f\n", kw$statistic, kw$p.value))
+    
+    if (kw$p.value < 0.05) {
+      wt <- pairwise.wilcox.test(df_sub[[var_name]], df_sub$cluster, p.adjust.method = "none", exact = FALSE)
+      cat("  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):\n")
+      print(round(wt$p.value, 4))
+    } else {
+      cat("  Factor not significant.\n")
+    }
+  } else {
+    cat("  => Assumptions MET. Proceeding with LMM.\n")
+    an <- anova(mod)
+    cat(sprintf("  LMM ANOVA: F = %.2f, p = %.4f\n", an$`F value`[1], an$`Pr(>F)`[1]))
+    
+    if (an$`Pr(>F)`[1] < 0.05) {
+      em <- emmeans(mod, pairwise ~ cluster, adjust = "tukey")
+      cat("  Tukey Pairwise Comparisons:\n")
+      print(em$contrasts)
+    }
+  }
+  
+  cat("\n  Group means and medians:\n")
+  summ <- df_sub %>% 
+    group_by(cluster) %>% 
     summarise(
-      mean = round(mean(.data[[response_var]], na.rm = TRUE), 3),
-      sd = round(sd(.data[[response_var]], na.rm = TRUE), 3),
-      n = n(),
-      .groups = "drop"
+      mean = mean(.data[[var_name]], na.rm=TRUE), 
+      median = median(.data[[var_name]], na.rm=TRUE), 
+      sd = sd(.data[[var_name]], na.rm=TRUE), 
+      n = n()
     )
-  print(as.data.frame(grp_means))
-  results$group_means <- grp_means
-
-  return(results)
+  print(as.data.frame(summ), digits=4)
 }
 
-# --- 7c. Harvest date LMM --------------------------------------------------
-
-cat("==== Harvest Date Analysis ====\n")
-harvest_results <- run_lmm_with_checks("Avg_Harvest_DOY", yield_filtered)
-
-cat("\n  VERIFICATION TARGETS (Harvest DOY):\n")
-cat("    C3 (Cool): 291 | C2 (PRE-V): 277 (-13d) | C1 (POST-V): 274 (-17d)\n")
-cat("    C1 vs C2: p = 0.001\n")
-
-# --- 7d. Yield LMM --------------------------------------------------------
+# --- Execute Models ---
+cat("\n==== Harvest Date Analysis ====\n")
+run_model("Avg_Harvest_DOY", yield_filtered)
 
 cat("\n==== Yield Analysis ====\n")
-yield_results <- run_lmm_with_checks("Yield_tha", yield_filtered)
-
-cat("\n  VERIFICATION TARGETS (Yield):\n")
-cat("    C3: 7.0 t/ha | C1: 5.5 (-22%) | C2: 5.0 (-30%)\n")
-cat("    C1 vs C2: p = 0.010\n")
-
-# --- 7e. Fruit composition LMMs (12 analytes) -----------------------------
+run_model("Yield_tha", yield_filtered)
 
 cat("\n==== Fruit Composition Analysis (12 analytes) ====\n")
+analytes <- c("B_Damascenone", "Octen_3_ol", "C6_compounds", "IBMP", 
+              "Total_anthocyanins", "Polymeric_tannins", "Quercetin_glycosides", 
+              "TSS", "Berry_moisture", "pH", "Malic_acid", "YAN")
 
-analyte_cols <- c("B_Damascenone", "Octen_3_ol", "C6_compounds", "IBMP",
-                  "Total_anthocyanins", "Polymeric_tannins",
-                  "Quercetin_glycosides", "TSS", "Berry_moisture",
-                  "pH", "Malic_acid", "YAN")
-
-# For comp_data, eligibility filtering is looser because of small sample
-# We still require blocks appearing in >= 2 clusters where possible
-comp_block_elig <- comp_data %>%
-  group_by(Site, Block_ID) %>%
-  summarise(n_obs = n(), n_clusters = n_distinct(cluster), .groups = "drop") %>%
-  filter(n_obs >= 2, n_clusters >= 2)
-
-comp_filtered <- comp_data %>%
-  semi_join(comp_block_elig, by = c("Site", "Block_ID"))
-
-# If filtering removes too many rows, use all comp_data
-if (nrow(comp_filtered) < 20) {
-  cat("  NOTE: Strict block eligibility yields too few obs (<20).\n")
-  cat("        Using all composition data with cluster labels.\n")
-  comp_filtered <- comp_data
+for (a in analytes) {
+  run_model(a, fruit_data)
 }
 
-composition_results <- list()
-for (analyte in analyte_cols) {
-  composition_results[[analyte]] <- run_lmm_with_checks(analyte, comp_filtered)
-}
-
-cat("\n\n  VERIFICATION TARGETS (Fruit Composition):\n")
-cat("    TSS: C3=26.0, C2=26.0, C1=26.4 (C1 only significant)\n")
-cat("    pH: C3=3.60, C2=3.60, C1=3.65 (C1 only significant)\n")
-cat("    Malic acid: C3=1338, C2=1338, C1=1996 (C1 only)\n")
-cat("    YAN: C3=124, C2=66, C1=94 (C2 worst)\n")
-cat("    1-octen-3-ol: C3=17.1, C2=27.8, C1=50.2 (both sig)\n")
-cat("    Berry moisture: NOT significant (p=0.299)\n")
-cat("    C6 compounds: NOT significant (p=0.371)\n")
-
-# --- 7f. Vine age sub-analysis --------------------------------------------
-
+# --- Vine Age Sub-Analysis ---
 cat("\n==== Vine Age Sub-Analysis ====\n")
-
-# We need vine age information. The paper splits blocks into:
-#   young: 3-5 years, mature: >5 years
-# This info may be derivable from DB2/DB3 based on first appearance year
-# (proxy for planting year)
-
-# Determine first observation year per block as proxy for planting year
 block_first_year <- db3_data %>%
   group_by(Site, Block_ID) %>%
   summarise(first_year = min(Season, na.rm = TRUE), .groups = "drop")
 
 yield_age <- yield_filtered %>%
-  left_join(block_first_year, by = c("Site", "Block_ID")) %>%
+  left_join(block_first_year, by = c("Site", "block_ID" = "Block_ID")) %>%
   mutate(
     vine_age = Season - first_year,
     age_group = ifelse(vine_age <= 5, "Young (3-5yr)", "Mature (>5yr)")
   )
 
-cat("Vine age distribution:\n")
-print(table(yield_age$age_group))
-
-# Run LMM separately for each age group
 for (ag in c("Young (3-5yr)", "Mature (>5yr)")) {
   cat(sprintf("\n-- %s --\n", ag))
   df_age <- yield_age %>% filter(age_group == ag)
-  if (nrow(df_age) >= 10) {
-    run_lmm_with_checks("Yield_tha", df_age)
-  } else {
-    cat("  Insufficient observations for this age group.\n")
-  }
+  run_model("Yield_tha", df_age)
 }
 
-cat("\n  VERIFICATION TARGETS (Vine Age):\n")
-cat("    Young: C1 = C2 = ~5.4 t/ha; both below C3 (6.5 t/ha, p <= 0.001)\n")
-cat("    Mature: C1=5.4, C2=4.9, C3=7.1; all sig different (p <= 0.029)\n")
-
-# --- Save -------------------------------------------------------------------
-
-save(yield_filtered, comp_filtered,
-     harvest_results, yield_results, composition_results,
-     yield_age,
-     file = file.path(output_dir, "06_lmm_results.RData"))
-
+save(yield_filtered, fruit_data, yield_age, file = "output/06_lmm_results.RData")
 cat("\n=== Section 7 Complete ===\n")
-cat("Saved to:", file.path(output_dir, "06_lmm_results.RData"), "\n")
