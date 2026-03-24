@@ -1,7 +1,6 @@
 ###############################################################################
 # 03_feature_engineering.R
-# Reproduction of Previtali et al. (2026)
-# Section 4: Feature Engineering (~200+ features)
+# Fixed: Tmax/Tmin/VPDmax correctly calculated as absolute interval EXTREMES
 ###############################################################################
 
 load("output/01_data_loaded.RData")
@@ -15,269 +14,231 @@ suppressPackageStartupMessages({
 
 cat("=== Section 4: Feature Engineering ===\n\n")
 
-# --- 4a. Core definitions ---------------------------------------------------
-# Heat day:  Tmax >= 37.99°C
-# Heatwave:  >= 2 consecutive heat days
-# HWU:       sum(Tmax - 37.99) across all days of a heatwave (positive deviations)
+HEAT_THRESHOLD <- 37.99
 
-HEAT_THRESHOLD <- 37.99  # degrees C
-MIN_HW_DAYS    <- 2   # minimum consecutive days for a heatwave
-
-# --- 4b. Helper function: compute heat features for a date range -----------
-
-compute_heat_features <- function(weather_subset) {
-  # weather_subset: data.frame with columns tmax, tmin, tmean, rain, vpdmin, vpdmax, DOY
-  # Returns a named vector of features
-
-  if (nrow(weather_subset) == 0) {
-    return(c(
-      mean_tmax = NA, mean_tmin = NA, mean_tavg = NA,
-      total_precip = NA, mean_vpdmin = NA, mean_vpdmax = NA,
-      n_heat_days = 0, n_heatwaves = 0, total_hwu = 0,
-      avg_hw_duration = 0, max_hw_duration = 0, max_hw_vpd = 0, avg_hw_vpd = 0, n_days = 0
-    ))
-  }
-
-  # Basic climate stats
-  mean_tmax   <- mean(weather_subset$tmax, na.rm = TRUE)
-  mean_tmin   <- mean(weather_subset$tmin, na.rm = TRUE)
-  mean_tavg   <- mean(weather_subset$tmean, na.rm = TRUE)
-  total_precip <- sum(weather_subset$rain, na.rm = TRUE)
-  mean_vpdmin <- mean(weather_subset$vpdmin, na.rm = TRUE)
-  mean_vpdmax <- mean(weather_subset$vpdmax, na.rm = TRUE)
-
-  # Heat day identification
-  heat_days   <- weather_subset$tmax >= HEAT_THRESHOLD
-  n_heat_days <- sum(heat_days, na.rm = TRUE)
-
-  # Heatwave detection: runs of >= 2 consecutive heat days
-  n_heatwaves    <- 0
-  total_hwu      <- 0
-  hw_durations   <- c()
-  hw_vpds        <- c()
-  hw_all_vpds    <- c()
-
-  if (n_heat_days >= MIN_HW_DAYS) {
-    # Find runs of consecutive heat days
-    rle_heat <- rle(heat_days)
-    hw_mask  <- rle_heat$values == TRUE & rle_heat$lengths >= MIN_HW_DAYS
-    n_heatwaves <- sum(hw_mask)
-
-    if (n_heatwaves > 0) {
-      # Extract each heatwave's properties
-      end_pos <- cumsum(rle_heat$lengths)
-      start_pos <- end_pos - rle_heat$lengths + 1
-
-      for (j in which(hw_mask)) {
-        hw_rows <- weather_subset[start_pos[j]:end_pos[j], ]
-        hw_durations <- c(hw_durations, nrow(hw_rows))
-
-        # HWU = sum(Tmax - 38) for positive deviations
-        hwu <- sum(pmax(0, hw_rows$tmax - HEAT_THRESHOLD))
-        total_hwu <- total_hwu + hwu
-
-        # Max VPDmax during this heatwave
-        hw_vpds <- c(hw_vpds, max(hw_rows$vpdmax, na.rm = TRUE))
-        hw_all_vpds <- c(hw_all_vpds, hw_rows$vpdmax)
-      }
-    }
-  }
-
-  avg_hw_duration <- ifelse(length(hw_durations) > 0, mean(hw_durations), 0)
-  max_hw_duration <- ifelse(length(hw_durations) > 0, max(hw_durations), 0)
-  max_hw_vpd      <- ifelse(length(hw_vpds) > 0, max(hw_vpds), 0)
-  avg_hw_vpd      <- ifelse(length(hw_all_vpds) > 0, mean(hw_all_vpds, na.rm = TRUE), 0)
-
+# --- Helper 1: Compute generic metrics for a given subset ---
+compute_generic <- function(w) {
+  if (nrow(w) == 0) return(c(gdd=0, tmax=NA, hwu=0, ppt=0, tmean=NA, tmin=NA, 
+                             fdays=0, frost=0, vpdmin=NA, vpdmax=NA, vpdavg=NA))
+  
+  safe_max <- function(x) if(all(is.na(x))) NA else max(x, na.rm = TRUE)
+  safe_min <- function(x) if(all(is.na(x))) NA else min(x, na.rm = TRUE)
+  
   c(
-    mean_tmax = mean_tmax, mean_tmin = mean_tmin, mean_tavg = mean_tavg,
-    total_precip = total_precip, mean_vpdmin = mean_vpdmin, mean_vpdmax = mean_vpdmax,
-    n_heat_days = n_heat_days, n_heatwaves = n_heatwaves, total_hwu = total_hwu,
-    avg_hw_duration = avg_hw_duration, max_hw_duration = max_hw_duration, 
-    max_hw_vpd = max_hw_vpd, avg_hw_vpd = avg_hw_vpd,
-    n_days = nrow(weather_subset)
+    gdd    = sum(pmax(0, (w$tmax + w$tmin)/2 - 10), na.rm = TRUE),
+    tmax   = safe_max(w$tmax),               # Absolute interval maximum
+    hwu    = sum(pmax(0, w$tmax - 38), na.rm = TRUE), 
+    ppt    = sum(w$rain, na.rm = TRUE),
+    tmean  = mean(w$tmean, na.rm = TRUE),    # Tmean is still an average
+    tmin   = safe_min(w$tmin),               # Absolute interval minimum
+    fdays  = sum(w$tmin <= 0, na.rm = TRUE),
+    frost  = sum(pmax(0, -w$tmin), na.rm = TRUE),
+    vpdmin = safe_min(w$vpdmin),
+    vpdmax = safe_max(w$vpdmax),
+    vpdavg = mean((w$vpdmax + w$vpdmin)/2, na.rm = TRUE)
   )
 }
 
-# --- 4c. Build feature matrix for all site-years ---------------------------
+# --- Helper 2: Compute heatwave-specific metrics ---
+compute_hw <- function(w) {
+  out <- list(heat_days=0, no_hw=0, avg_dur=0, max_dur=0, 
+              tot_hw_hwu=0, avg_hw_hwu=0, avg_vpd=0, max_vpd=0)
+  if (nrow(w) == 0) return(out)
+  
+  heat_flags <- w$tmax >= HEAT_THRESHOLD
+  out$heat_days <- sum(heat_flags, na.rm = TRUE)
+  
+  if (out$heat_days >= 2) {
+    rle_heat <- rle(heat_flags)
+    hw_mask  <- rle_heat$values == TRUE & rle_heat$lengths >= 2
+    out$no_hw <- sum(hw_mask)
+    
+    if (out$no_hw > 0) {
+      end_pos   <- cumsum(rle_heat$lengths)
+      start_pos <- end_pos - rle_heat$lengths + 1
+      
+      durs <- c(); hwus <- c(); vpds <- c()
+      
+      for (j in which(hw_mask)) {
+        hw_rows <- w[start_pos[j]:end_pos[j], ]
+        durs <- c(durs, nrow(hw_rows))
+        hwus <- c(hwus, sum(pmax(0, hw_rows$tmax - 38), na.rm = TRUE))
+        vpds <- c(vpds, max(hw_rows$vpdmax, na.rm = TRUE))
+      }
+      
+      out$avg_dur    <- mean(durs)
+      out$max_dur    <- max(durs)
+      out$tot_hw_hwu <- sum(hwus)
+      out$avg_hw_hwu <- mean(hwus)
+      out$avg_vpd    <- mean(vpds, na.rm = TRUE)
+      out$max_vpd    <- max(vpds, na.rm = TRUE)
+    }
+  }
+  out
+}
 
-# Add year info to weather
-weather <- db1_data %>%
-  mutate(Year = year(date), DOY = yday(date))
-
-# Define month windows (April=4 through October=10)
-months_list <- setNames(4:10, month.name[4:10])
-
-# We iterate over site_year_pheno (the ~213 site-year combos after imputation)
+# --- Main loop ---
+weather <- db1_data %>% mutate(Year = year(date), Month = month(date), DOY = yday(date))
 cat("Building feature matrix for", nrow(site_year_pheno), "site-years...\n")
 
 all_features <- list()
 
 for (i in 1:nrow(site_year_pheno)) {
-  sy <- site_year_pheno[i, ]
-  site <- sy$Site
-  year <- sy$Season
-
-  w <- weather %>% filter(Site == site, Year == year)
-
+  sy   <- site_year_pheno[i, ]
+  w <- weather %>% filter(Site == sy$Site, Year == sy$Season)
   if (nrow(w) == 0) next
+  
+  # Month subsets
+  w_m <- lapply(1:12, function(m) w %>% filter(Month == m))
+  names(w_m) <- month.abb
+  
+  # Calendar subsets
+  w_preS <- w %>% filter(Month %in% 1:3)
+  w_preV_m <- w %>% filter(Month %in% 5:7)
+  w_postV_m <- w %>% filter(Month %in% 8:10)
+  w_apr_oct <- w %>% filter(Month %in% 4:10)
+  w_apr_jul <- w %>% filter(Month %in% 4:7)
+  
+  # Phenology subsets
+  w_bb_bl  <- w %>% filter(DOY >= sy$BB_DOY, DOY <= sy$FL_DOY)
+  w_bl_ver <- w %>% filter(DOY >= sy$FL_DOY, DOY <= sy$VER_DOY)
+  w_ver_h  <- w %>% filter(DOY >= sy$VER_DOY, DOY <= sy$H_DOY)
+  w_bb_h   <- w %>% filter(DOY >= sy$BB_DOY, DOY <= sy$H_DOY)
+  
+  # Precompute block metrics
+  gen_m <- lapply(w_m, compute_generic)
+  hw_m  <- lapply(w_m, compute_hw)
+  
+  # ---------------------------------------------------------------------
+  # ASSEMBLE 220 FEATURES 
+  # ---------------------------------------------------------------------
+  f <- numeric(220)
+  
+  f[1:8] <- sapply(3:10, function(x) gen_m[[x]]["gdd"])
+  f[9] <- compute_generic(w_preV_m)["gdd"]; f[10] <- compute_generic(w_postV_m)["gdd"]; f[11] <- compute_generic(w_apr_oct)["gdd"]
+  
+  f[12:23] <- sapply(1:12, function(x) gen_m[[x]]["tmax"])
+  f[24] <- compute_generic(w_preV_m)["tmax"]; f[25] <- compute_generic(w_postV_m)["tmax"]; f[26] <- compute_generic(w_apr_oct)["tmax"]
+  f[27] <- ifelse(nrow(w)>0, w$DOY[which.max(w$tmax)], NA)
+  
+  f[28:32] <- sapply(5:9, function(x) gen_m[[x]]["hwu"])
+  f[33] <- compute_generic(w_preV_m)["hwu"]; f[34] <- compute_generic(w_postV_m)["hwu"]; f[35] <- compute_generic(w_apr_oct)["hwu"]
+  
+  f[36:47] <- sapply(1:12, function(x) gen_m[[x]]["ppt"])
+  f[48] <- compute_generic(w_preS)["ppt"]; f[49] <- compute_generic(w_preV_m)["ppt"]; f[50] <- compute_generic(w_postV_m)["ppt"]; f[51] <- compute_generic(w_apr_oct)["ppt"]
+  f[52] <- ifelse(nrow(w)>0, w$DOY[which.max(w$rain)], NA)
+  
+  f[53:64] <- sapply(1:12, function(x) gen_m[[x]]["tmean"])
+  f[65] <- compute_generic(w_preV_m)["tmean"]; f[66] <- compute_generic(w_postV_m)["tmean"]; f[67] <- compute_generic(w_apr_oct)["tmean"]
+  f[68] <- ifelse(nrow(w)>0, w$DOY[which.max(w$tmean)], NA)
+  
+  f[69:80] <- sapply(1:12, function(x) gen_m[[x]]["tmin"])
+  f[81] <- compute_generic(w_preS)["tmin"]; f[82] <- compute_generic(w_preV_m)["tmin"]; f[83] <- compute_generic(w_postV_m)["tmin"]; f[84] <- compute_generic(w_apr_oct)["tmin"]
+  
+  f[85:89] <- sapply(1:5, function(x) gen_m[[x]]["fdays"]); f[90:92] <- sapply(10:12, function(x) gen_m[[x]]["fdays"])
+  f[93] <- compute_generic(w_apr_oct)["fdays"]
+  
+  f[94:98] <- sapply(1:5, function(x) gen_m[[x]]["frost"]); f[99:100] <- sapply(11:12, function(x) gen_m[[x]]["frost"])
+  
+  f[101:112] <- sapply(1:12, function(x) gen_m[[x]]["vpdmin"])
+  f[113] <- compute_generic(w_apr_jul)["vpdmin"]; f[114] <- compute_generic(w_postV_m)["vpdmin"]; f[115] <- compute_generic(w_apr_oct)["vpdmin"]
+  
+  f[116:127] <- sapply(1:12, function(x) gen_m[[x]]["vpdmax"])
+  f[128] <- compute_generic(w_apr_jul)["vpdmax"]; f[129] <- compute_generic(w_postV_m)["vpdmax"]; f[130] <- compute_generic(w_apr_oct)["vpdmax"]
+  
+  f[131] <- compute_hw(w)$heat_days
+  f[132:135] <- sapply(6:9, function(x) hw_m[[x]]$heat_days)
+  f[136] <- compute_hw(w_preV_m)$heat_days; f[137] <- compute_hw(w_postV_m)$heat_days
+  
+  f[138:141] <- sapply(6:9, function(x) hw_m[[x]]$no_hw)
+  f[142] <- compute_hw(w_preV_m)$no_hw; f[143] <- compute_hw(w_postV_m)$no_hw; f[144] <- compute_hw(w_apr_oct)$no_hw
+  
+  hw_seas <- compute_hw(w_apr_oct)
+  f[145] <- hw_seas$avg_dur; f[146] <- hw_seas$max_dur; f[147] <- hw_seas$tot_hw_hwu
+  f[148] <- hw_seas$avg_hw_hwu; f[149] <- hw_seas$avg_vpd; f[150] <- hw_seas$max_vpd
+  
+  f[151:154] <- sapply(6:9, function(x) hw_m[[x]]$tot_hw_hwu)
+  f[155] <- compute_hw(w_preV_m)$tot_hw_hwu; f[156] <- compute_hw(w_postV_m)$tot_hw_hwu
+  
+  w_p <- list(w_bb_bl, w_bl_ver, w_ver_h, w_bb_h)
+  f[157:160] <- sapply(w_p, function(x) compute_generic(x)["tmax"])
+  f[161:164] <- sapply(w_p, function(x) compute_generic(x)["tmean"])
+  f[165:168] <- sapply(w_p, function(x) compute_generic(x)["tmin"])
+  f[169:172] <- sapply(w_p, function(x) compute_generic(x)["ppt"])
+  f[173:176] <- sapply(w_p, function(x) compute_generic(x)["fdays"])
+  f[177:180] <- sapply(w_p, function(x) compute_generic(x)["frost"])
+  f[181:184] <- sapply(w_p, function(x) compute_generic(x)["hwu"])
+  f[185:188] <- sapply(w_p, function(x) compute_generic(x)["vpdmax"])
+  f[189:192] <- sapply(w_p, function(x) compute_generic(x)["vpdavg"])
+  f[193:196] <- sapply(w_p, function(x) compute_generic(x)["vpdmin"])
+  
+  hw_p <- lapply(w_p[2:4], compute_hw)
+  f[197:199] <- sapply(hw_p, function(x) x$no_hw)
+  f[200:202] <- sapply(hw_p, function(x) x$avg_dur)
+  f[203:205] <- sapply(hw_p, function(x) x$max_dur)
+  f[206:208] <- sapply(hw_p, function(x) x$tot_hw_hwu)
+  f[209:211] <- sapply(hw_p, function(x) x$avg_hw_hwu)
+  f[212:214] <- sapply(hw_p, function(x) x$avg_vpd)
+  f[215:217] <- sapply(hw_p, function(x) x$max_vpd)
+  f[218:220] <- sapply(hw_p, function(x) x$heat_days)
 
-  features <- c()
-  feature_names <- c()
-
-  # --- Monthly features (April through October) ---
-  for (m in 4:10) {
-    m_name <- month.abb[m]
-    w_month <- w %>% filter(month(date) == m)
-    f <- compute_heat_features(w_month)
-    # Drop max_hw_duration and avg_hw_vpd as they are not listed for monthly
-    f <- f[!names(f) %in% c("max_hw_duration", "avg_hw_vpd")]
-    names(f) <- paste0(m_name, "_", names(f))
-    features <- c(features, f)
-    feature_names <- c(feature_names, names(f))
-  }
-
-  # --- Seasonal chronological aggregations ---
-  # Full season: April-October
-  w_full <- w %>% filter(month(date) >= 4 & month(date) <= 10)
-  f_full <- compute_heat_features(w_full)
-  f_full <- f_full[!names(f_full) %in% c("max_hw_duration", "avg_hw_vpd")]
-  names(f_full) <- paste0("Full_", names(f_full))
-  features <- c(features, f_full)
-
-  # Early season: May-July
-  w_early <- w %>% filter(month(date) >= 5 & month(date) <= 7)
-  f_early <- compute_heat_features(w_early)
-  f_early <- f_early[!names(f_early) %in% c("max_hw_duration", "avg_hw_vpd")]
-  names(f_early) <- paste0("Early_", names(f_early))
-  features <- c(features, f_early)
-
-  # Late season: August-October
-  w_late <- w %>% filter(month(date) >= 8 & month(date) <= 10)
-  f_late <- compute_heat_features(w_late)
-  f_late <- f_late[!names(f_late) %in% c("max_hw_duration", "avg_hw_vpd")]
-  names(f_late) <- paste0("Late_", names(f_late))
-  features <- c(features, f_late)
-
-  # --- Phenological interval features ---
-  # BB to FL
-  if (!is.na(sy$BB_DOY) && !is.na(sy$FL_DOY) && sy$FL_DOY > sy$BB_DOY) {
-    w_bb_fl <- w %>% filter(DOY >= sy$BB_DOY & DOY <= sy$FL_DOY)
-    f_bb_fl <- compute_heat_features(w_bb_fl)
-    names(f_bb_fl) <- paste0("BB_FL_", names(f_bb_fl))
-    features <- c(features, f_bb_fl)
-  } else {
-    f_bb_fl <- rep(NA, 14)
-    names(f_bb_fl) <- paste0("BB_FL_", c("mean_tmax", "mean_tmin", "mean_tavg",
-      "total_precip", "mean_vpdmin", "mean_vpdmax", "n_heat_days", "n_heatwaves",
-      "total_hwu", "avg_hw_duration", "max_hw_duration", "max_hw_vpd", "avg_hw_vpd", "n_days"))
-    features <- c(features, f_bb_fl)
-  }
-
-  # FL to VER  <- highest importance for clustering; do not skip
-  if (!is.na(sy$FL_DOY) && !is.na(sy$VER_DOY) && sy$VER_DOY > sy$FL_DOY) {
-    w_fl_ver <- w %>% filter(DOY >= sy$FL_DOY & DOY <= sy$VER_DOY)
-    f_fl_ver <- compute_heat_features(w_fl_ver)
-    names(f_fl_ver) <- paste0("FL_VER_", names(f_fl_ver))
-    features <- c(features, f_fl_ver)
-  } else {
-    f_fl_ver <- rep(NA, 14)
-    names(f_fl_ver) <- paste0("FL_VER_", c("mean_tmax", "mean_tmin", "mean_tavg",
-      "total_precip", "mean_vpdmin", "mean_vpdmax", "n_heat_days", "n_heatwaves",
-      "total_hwu", "avg_hw_duration", "max_hw_duration", "max_hw_vpd", "avg_hw_vpd", "n_days"))
-    features <- c(features, f_fl_ver)
-  }
-
-  # VER to H
-  if (!is.na(sy$VER_DOY) && !is.na(sy$H_DOY) && sy$H_DOY > sy$VER_DOY) {
-    w_ver_h <- w %>% filter(DOY >= sy$VER_DOY & DOY <= sy$H_DOY)
-    f_ver_h <- compute_heat_features(w_ver_h)
-    names(f_ver_h) <- paste0("VER_H_", names(f_ver_h))
-    features <- c(features, f_ver_h)
-  } else {
-    f_ver_h <- rep(NA, 14)
-    names(f_ver_h) <- paste0("VER_H_", c("mean_tmax", "mean_tmin", "mean_tavg",
-      "total_precip", "mean_vpdmin", "mean_vpdmax", "n_heat_days", "n_heatwaves",
-      "total_hwu", "avg_hw_duration", "max_hw_duration", "max_hw_vpd", "avg_hw_vpd", "n_days"))
-    features <- c(features, f_ver_h)
-  }
-
-  # BB to H (full phenological season)
-  if (!is.na(sy$BB_DOY) && !is.na(sy$H_DOY) && sy$H_DOY > sy$BB_DOY) {
-    w_bb_h <- w %>% filter(DOY >= sy$BB_DOY & DOY <= sy$H_DOY)
-    f_bb_h <- compute_heat_features(w_bb_h)
-    names(f_bb_h) <- paste0("BB_H_", names(f_bb_h))
-    features <- c(features, f_bb_h)
-  } else {
-    f_bb_h <- rep(NA, 14)
-    names(f_bb_h) <- paste0("BB_H_", c("mean_tmax", "mean_tmin", "mean_tavg",
-      "total_precip", "mean_vpdmin", "mean_vpdmax", "n_heat_days", "n_heatwaves",
-      "total_hwu", "avg_hw_duration", "max_hw_duration", "max_hw_vpd", "avg_hw_vpd", "n_days"))
-    features <- c(features, f_bb_h)
-  }
-
-  # Add phenological DOYs as features
-  pheno_feats <- c(
-    BB_DOY  = sy$BB_DOY,
-    FL_DOY  = sy$FL_DOY,
-    VER_DOY = sy$VER_DOY,
-    H_DOY   = sy$H_DOY,
-    BB_FL_interval  = sy$FL_DOY - sy$BB_DOY,
-    FL_VER_interval = sy$VER_DOY - sy$FL_DOY,
-    VER_H_interval  = sy$H_DOY - sy$VER_DOY,
-    BB_H_interval   = sy$H_DOY - sy$BB_DOY
-  )
-  features <- c(features, pheno_feats)
-
-  all_features[[i]] <- features
+  all_features[[i]] <- as.numeric(f)
 }
 
 # Combine into matrix
 feature_matrix <- do.call(rbind, all_features)
-rownames(feature_matrix) <- paste(site_year_pheno$Site,
-                                   site_year_pheno$Season, sep = "_")
+rownames(feature_matrix) <- paste(site_year_pheno$Site, site_year_pheno$Season, sep = "_")
 
-cat("  Raw feature matrix:", nrow(feature_matrix), "x", ncol(feature_matrix), "\n")
+feature_names <- c(
+  "GDD_march", "GDD_april", "GDD_may", "GDD_june", "GDD_july", "GDD_aug", "GDD_sep", "GDD_oct", "GDD_preV", "GDD_postV", "GDD_Apr_Oct",
+  "Tmax_jan", "Tmax_feb", "Tmax_march", "Tmax_april", "Tmax_may", "Tmax_june", "Tmax_july", "Tmax_aug", "Tmax_sep", "Tmax_oct", "Tmax_nov", "Tmax_dec", "Tmax_preV", "Tmax_postV", "Tmax_Apr_Oct", "Tmax_doy",
+  "HWU_may", "HWU_june", "HWU_july", "HWU_aug", "HWU_sep", "HWU_preV", "HWU_postV", "HWU_Apr_Oct",
+  "ppt_jan", "ppt_feb", "ppt_march", "ppt_april", "ppt_may", "ppt_june", "ppt_july", "ppt_aug", "ppt_sep", "ppt_oct", "ppt_nov", "ppt_dec", "ppt_preS", "ppt_preV", "ppt_postV", "ppt_Apr_Oct", "ppt_max_doy",
+  "tmean_jan", "tmean_feb", "tmean_march", "tmean_apr", "tmean_may", "tmean_june", "tmean_july", "tmean_aug", "tmean_sep", "tmean_oct", "tmean_nov", "tmean_dec", "tmean_preS", "tmean_preV", "tmean_postV", "tmean_Apr_Oct",
+  "tmin_jan", "tmin_feb", "tmin_march", "tmin_apr", "tmin_may", "tmin_june", "tmin_july", "tmin_aug", "tmin_sep", "tmin_oct", "tmin_nov", "tmin_dec", "tmin_preS", "tmin_preV", "tmin_postV", "tmin_Apr_Oct",
+  "fdays_jan", "fdays_feb", "fdays_mar", "fdays_apr", "fdays_may", "fdays_oct", "fdays_nov", "fdays_dec", "fdays_Apr_Oct",
+  "frost_jan", "frost_feb", "frost_march", "frost_apr", "frost_may", "frost_nov", "frost_dec",
+  "vpdmin_jan", "vpdmin_feb", "vpdmin_march", "vpdmin_apr", "vpdmin_may", "vpdmin_june", "vpdmin_july", "vpdmin_aug", "vpdmin_sep", "vpdmin_oct", "vpdmin_nov", "vpdmin_dec", "vpdmin_preV", "vpdmin_postV", "vpdmin_Apr_Oct",
+  "vpdmax_jan", "vpdmax_feb", "vpdmax_march", "vpdmax_apr", "vpdmax_may", "vpdmax_june", "vpdmax_july", "vpdmax_aug", "vpdmax_sep", "vpdmax_oct", "vpdmax_nov", "vpdmax_dec", "vpdmax_preV", "vpdmax_postV", "vpdmax_Apr_Oct",
+  "heat_days_100", "heat_days_june", "heat_days_july", "heat_days_aug", "heat_days_sep", "heat_days_preV", "heat_days_postV",
+  "no_hw_june", "no_hw_july", "no_hw_aug", "no_hw_sep", "no_hw_preV", "no_hw_postV", "no_hw",
+  "avg_hw_duration", "max_hw_duration", "tot_hw_hwu", "avg_hw_hwu", "avg_hw_vpd", "max_hw_vpd",
+  "hw_hwu_june", "hw_hwu_july", "hw_hwu_aug", "hw_hwu_sep", "hw_hwu_preV", "hw_hwu_postV",
+  "Tmax_BBtoBL", "Tmax_BLtoVER", "Tmax_VERtoH", "Tmax_BBtoH",
+  "Tmean_BBtoBL", "Tmean_BLtoVER", "Tmean_VERtoH", "Tmean_BBtoH",
+  "Tmin_BBtoBL", "Tmin_BLtoVER", "Tmin_VERtoH", "Tmin_BBtoH",
+  "rain_BBtoBL", "rain_BLtoVER", "rain_VERtoH", "rain_BBtoH",
+  "fdays_BBtoBL", "fdays_BLtoVER", "fdays_VERtoH", "fdays_BBtoH",
+  "frost_BBtoBL", "frost_BLtoVER", "frost_VERtoH", "frost_BBtoH",
+  "hwu_BBtoBL", "hwu_BLtoVER", "hwu_VERtoH", "hwu_BBtoH",
+  "vpdmax_BBtoBL", "vpdmax_BLtoVER", "vpdmax_VERtoH", "vpdmax_BBtoH",
+  "vpdavg_BBtoBL", "vpdavg_BLtoVER", "vpdavg_VERtoH", "vpdavg_BBtoH",
+  "vpdmin_BBtoBL", "vpdmin_BLtoVER", "vpdmin_VERtoH", "vpdmin_BBtoH",
+  "no_hw_BLtoVER", "no_hw_VERtoH", "no_hw_BBtoH",
+  "avg_hw_duration_BLtoVER", "avg_hw_duration_VERtoH", "avg_hw_duration_BBtoH",
+  "max_hw_duration_BLtoVER", "max_hw_duration_VERtoH", "max_hw_duration_BBtoH",
+  "tot_hw_hwu_BLtoVER", "tot_hw_hwu_VERtoH", "tot_hw_hwu_BBtoH",
+  "avg_hw_hwu_BLtoVER", "avg_hw_hwu_VERtoH", "avg_hw_hwu_BBtoH",
+  "avg_hw_vpd_BLtoVER", "avg_hw_vpd_VERtoH", "avg_hw_vpd_BBtoH",
+  "max_hw_vpd_BLtoVER", "max_hw_vpd_VERtoH", "max_hw_vpd_BBtoH",
+  "heat_days_BLtoVER", "heat_days_VERtoH", "heat_days_BBtoH"
+)
 
-# --- 4d. Handle NA and zero-variance columns --------------------------------
+colnames(feature_matrix) <- feature_names
 
-# Remove columns that are entirely NA
-na_cols <- colSums(is.na(feature_matrix)) == nrow(feature_matrix)
-cat("  Columns entirely NA:", sum(na_cols), "\n")
-feature_matrix <- feature_matrix[, !na_cols]
-
-# For remaining NAs, impute with column median
-for (j in 1:ncol(feature_matrix)) {
+for (j in seq_len(ncol(feature_matrix))) {
   na_mask <- is.na(feature_matrix[, j])
-  if (any(na_mask)) {
-    feature_matrix[na_mask, j] <- median(feature_matrix[, j], na.rm = TRUE)
-  }
+  if (any(na_mask)) feature_matrix[na_mask, j] <- median(feature_matrix[, j], na.rm = TRUE)
 }
 
-# Remove zero-variance columns (can't be scaled)
 variances <- apply(feature_matrix, 2, var)
-zero_var <- variances == 0 | is.na(variances)
-cat("  Zero-variance columns removed:", sum(zero_var), "\n")
+zero_var  <- variances == 0 | is.na(variances)
 feature_matrix <- feature_matrix[, !zero_var]
-
-cat("  Final feature matrix:", nrow(feature_matrix), "x", ncol(feature_matrix), "\n")
-cat("  Expected: ~213 rows x ~200+ columns\n\n")
-
-# --- 4e. Z-score normalisation ---------------------------------------------
-
 scaled_features <- scale(feature_matrix)
 
-# Verify: mean=0, sd=1 per column
-cat("Normalisation check:\n")
-cat("  Column means (should be ~0):", round(mean(colMeans(scaled_features)), 6), "\n")
-cat("  Column SDs (should be ~1):", round(mean(apply(scaled_features, 2, sd)), 6), "\n\n")
-
-# --- Save -------------------------------------------------------------------
+cat("  Final scaled feature matrix:", nrow(scaled_features), "x", ncol(scaled_features), "\n")
 
 save(feature_matrix, scaled_features, site_year_pheno,
-     HEAT_THRESHOLD, MIN_HW_DAYS,
-     file = file.path(output_dir, "03_features.RData"))
+     file = file.path("output", "03_features.RData"))
 
 cat("=== Section 4 Complete ===\n")
-cat("  Features:", ncol(scaled_features), "\n")
-cat("  Site-years:", nrow(scaled_features), "\n")
-cat("Saved to:", file.path(output_dir, "03_features.RData"), "\n")
