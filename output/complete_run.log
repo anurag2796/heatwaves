@@ -1,4 +1,4 @@
-Starting complete run at Tue Mar 24 07:26:37 EDT 2026
+Starting complete run at Tue Mar 24 09:47:20 EDT 2026
 ========== RUNNING 01_setup_and_data.R ==========
 Registered S3 method overwritten by 'car':
   method           from
@@ -196,56 +196,73 @@ Saved to: output/04_clusters.RData
 === Section 6: Bootstrap Random Forest Validation ===
 
 Random seed: 42 
-Parameters: ntree=500, mtry=7, n_iter=50, Stratified 50:50 split
 Data: 215 observations, 217 features
 
+=== PRIMARY: OOB-based Random Forest ===
+Parameters: ntree=500, mtry=14 (sqrt(p)=14)
+
+  OOB Total Error Rate: 6.98%
+  Paper target:        ~1.35%
+
+  Per-class OOB error rates:
+    C1: 5.88%
+    C2: 13.79%
+    C3: 4.29%
+
+  OOB Confusion matrix:
+   C1 C2  C3 class.error
+C1 16  1   0  0.05882353
+C2  0 50   8  0.13793103
+C3  0  6 134  0.04285714
+
+=== Top 20 Features by Mean Decrease Accuracy (OOB) ===
+   1. max_hw_vpd_FLtoVER                  MDA = 8.219
+   2. avg_hw_vpd_FLtoVER                  MDA = 7.987
+   3. vpdmax_july                         MDA = 7.234
+   4. avg_hw_hwu_FLtoVER                  MDA = 6.896
+   5. tot_hw_hwu_VERtoH                   MDA = 6.811
+   6. tot_hw_hwu_BBtoH                    MDA = 6.759
+   7. tot_hw_hwu                          MDA = 6.643
+   8. hw_hwu_july                         MDA = 6.595
+   9. max_hw_vpd                          MDA = 6.541
+  10. avg_hw_vpd                          MDA = 6.454
+  11. avg_hw_hwu                          MDA = 6.430
+  12. Tmax_sep                            MDA = 6.138
+  13. Tmax_july                           MDA = 6.009
+  14. ppt_nov                             MDA = 5.971
+  15. HWU_july                            MDA = 5.923
+  16. avg_hw_hwu_BBtoH                    MDA = 5.782
+  17. tmean_july                          MDA = 5.649
+  18. hw_hwu_postV                        MDA = 5.632
+  19. max_hw_vpd_BBtoH                    MDA = 5.555
+  20. HWU_Apr_Oct                         MDA = 5.349
+
+=== Verification: Top 8 features (OOB) ===
+  Top 8 features:
+     max_hw_vpd_FLtoVER 
+     avg_hw_vpd_FLtoVER 
+     vpdmax_july 
+     avg_hw_hwu_FLtoVER 
+     tot_hw_hwu_VERtoH 
+     tot_hw_hwu_BBtoH 
+     tot_hw_hwu 
+     hw_hwu_july 
+  FL-VER/Pre-V related: 3 of 8
+
+=== SECONDARY: Bootstrap Stratified 50:50 Split (Stress Test) ===
+Parameters: ntree=500, mtry=14, n_iter=50
+
 Running bootstrap iterations:
-  Iteration 10/50: TER = 7.41%
+  Iteration 10/50: TER = 10.19%
   Iteration 20/50: TER = 9.26%
   Iteration 30/50: TER = 9.26%
-  Iteration 40/50: TER = 8.33%
-  Iteration 50/50: TER = 14.81%
+  Iteration 40/50: TER = 6.48%
+  Iteration 50/50: TER = 8.33%
 
-=== TER Results ===
-  Mean TER:   10.00%
-  Median TER: 9.72%
-  Max TER:    16.67%
-  Min TER:    4.63%
-  SD TER:     2.61%
-
-=== Top 20 Features by Mean Decrease Accuracy ===
-   1. max_hw_vpd_BLtoVER                  MDA = 5.516
-   2. avg_hw_vpd_BLtoVER                  MDA = 5.458
-   3. tot_hw_hwu_BBtoH                    MDA = 5.291
-   4. HWU_Apr_Oct                         MDA = 5.236
-   5. avg_hw_hwu                          MDA = 5.147
-   6. hwu_BBtoH                           MDA = 5.143
-   7. avg_hw_hwu_BBtoH                    MDA = 5.044
-   8. avg_hw_hwu_BLtoVER                  MDA = 5.038
-   9. tot_hw_hwu                          MDA = 5.013
-  10. max_hw_vpd_BBtoH                    MDA = 4.776
-  11. tot_hw_hwu_BLtoVER                  MDA = 4.776
-  12. avg_hw_vpd_BBtoH                    MDA = 4.740
-  13. max_hw_vpd                          MDA = 4.739
-  14. avg_hw_vpd                          MDA = 4.601
-  15. hw_hwu_july                         MDA = 4.533
-  16. HWU_july                            MDA = 4.492
-  17. avg_hw_duration_BLtoVER             MDA = 4.385
-  18. hwu_BLtoVER                         MDA = 4.342
-  19. vpdmax_july                         MDA = 4.315
-  20. Tmax_july                           MDA = 4.302
-
-=== Verification: Top 8 features ===
-  Top 8 features:
-     max_hw_vpd_BLtoVER 
-     avg_hw_vpd_BLtoVER 
-     tot_hw_hwu_BBtoH 
-     HWU_Apr_Oct 
-     avg_hw_hwu 
-     hwu_BBtoH 
-     avg_hw_hwu_BBtoH 
-     avg_hw_hwu_BLtoVER 
-  All FL-VER related?: NO (3 of 8)
+  Stress-test TER Results:
+    Mean TER:   9.67%
+    Median TER: 9.26%
+    Range:      3.70% – 16.67%
 
 === Section 6 Complete ===
 ========== RUNNING 06_linear_mixed_models.R ==========
@@ -260,10 +277,24 @@ Fruit composition data with cluster labels: 752 obs
 --- Model: Avg_Harvest_DOY ---
   Observations: 1108 , Blocks: 187 
   Per cluster: C1=435, C2=128, C3=545
-  Shapiro-Wilk: W=0.9954, p=0.0021  |  Levene: F=68.72, p=0.0000
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 198.22, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9954, p=0.0021
+    Levene:       F=68.72, p=0.0000
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 154.35, p = 0.000000
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate    SE   df t.ratio p.value
+ C1 - C2     -1.53 1.220 1009  -1.249  0.4247
+ C1 - C3    -12.94 0.765  955 -16.917 <0.0001
+ C2 - C3    -11.41 1.200 1025  -9.478 <0.0001
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 198.22, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
       C1 C2
 C2 0.138 NA
 C3 0.000  0
@@ -279,10 +310,24 @@ C3 0.000  0
 --- Model: Yield_tha ---
   Observations: 1426 , Blocks: 187 
   Per cluster: C1=435, C2=168, C3=823
-  Shapiro-Wilk: W=0.9688, p=0.0000  |  Levene: F=22.02, p=0.0000
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 100.75, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9688, p=0.0000
+    Levene:       F=22.02, p=0.0000
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 61.01, p = 0.000000
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate    SE   df t.ratio p.value
+ C1 - C2      1.01 0.332 1339   3.053  0.0065
+ C1 - C3     -1.77 0.212 1302  -8.366 <0.0001
+ C2 - C3     -2.79 0.311 1345  -8.973 <0.0001
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 100.75, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
       C1 C2
 C2 0.011 NA
 C3 0.000  0
@@ -298,13 +343,27 @@ C3 0.000  0
 --- Model: B_Damascenone ---
   Observations: 750 , Blocks: 189 
   Per cluster: C1=244, C2=44, C3=462
-  Shapiro-Wilk: W=0.9780, p=0.0000  |  Levene: F=0.65, p=0.5210
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 16.51, p = 0.0003
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
-       C1    C2
-C2 0.0623    NA
-C3 0.0042 9e-04
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9780, p=0.0000
+    Levene:       F=0.65, p=0.5210
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 11.69, p = 0.000010
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate    SE  df t.ratio p.value
+ C1 - C2      3.44 1.990 684   1.731  0.1945
+ C1 - C3     -3.52 0.908 609  -3.875  0.0003
+ C2 - C3     -6.96 1.950 705  -3.570  0.0011
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 16.51, p = 0.000260
+    Pairwise Wilcoxon (BH-adjusted):
+       C1     C2
+C2 0.0623     NA
+C3 0.0063 0.0027
 
   Group means and medians:
   cluster  mean median    sd   n
@@ -315,10 +374,24 @@ C3 0.0042 9e-04
 --- Model: Octen_3_ol ---
   Observations: 752 , Blocks: 189 
   Per cluster: C1=244, C2=45, C3=463
-  Shapiro-Wilk: W=0.8855, p=0.0000  |  Levene: F=159.01, p=0.0000
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 179.74, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.8855, p=0.0000
+    Levene:       F=159.01, p=0.0000
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 183.32, p = 0.000000
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate   SE  df t.ratio p.value
+ C1 - C2     29.42 3.70 738   7.952 <0.0001
+ C1 - C3     33.25 1.75 633  18.978 <0.0001
+ C2 - C3      3.82 3.60 749   1.063  0.5373
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 179.74, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
    C1    C2
 C2  0    NA
 C3  0 0.215
@@ -332,12 +405,26 @@ C3  0 0.215
 --- Model: C6_compounds ---
   Observations: 752 , Blocks: 189 
   Per cluster: C1=244, C2=45, C3=463
-  Shapiro-Wilk: W=0.9355, p=0.0000  |  Levene: F=9.38, p=0.0001
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 35.94, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9355, p=0.0000
+    Levene:       F=9.38, p=0.0001
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 14.20, p = 0.000001
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate  SE  df t.ratio p.value
+ C1 - C2     -1478 383 748  -3.862  0.0004
+ C1 - C3      -858 184 643  -4.672 <0.0001
+ C2 - C3       620 370 741   1.675  0.2157
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 35.94, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
        C1    C2
-C2 0.0052    NA
+C2 0.0077    NA
 C3 0.0000 0.955
 
   Group means and medians:
@@ -349,10 +436,17 @@ C3 0.0000 0.955
 --- Model: IBMP ---
   Observations: 752 , Blocks: 189 
   Per cluster: C1=244, C2=45, C3=463
-  Shapiro-Wilk: W=0.8743, p=0.0000  |  Levene: F=4.41, p=0.0124
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 1.81, p = 0.4047
-  Factor not significant.
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.8743, p=0.0000
+    Levene:       F=4.41, p=0.0124
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 2.53, p = 0.080593
+  => Cluster effect NOT significant (p >= 0.05).
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 1.81, p = 0.404665
+    Factor not significant.
 
   Group means and medians:
   cluster  mean median    sd   n
@@ -363,10 +457,24 @@ C3 0.0000 0.955
 --- Model: Total_anthocyanins ---
   Observations: 752 , Blocks: 189 
   Per cluster: C1=244, C2=45, C3=463
-  Shapiro-Wilk: W=0.9940, p=0.0043  |  Levene: F=3.37, p=0.0350
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 142.48, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9940, p=0.0043
+    Levene:       F=3.37, p=0.0350
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 95.64, p = 0.000000
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate     SE  df t.ratio p.value
+ C1 - C2   -0.1685 0.0391 668  -4.313 <0.0001
+ C1 - C3   -0.2477 0.0179 604 -13.810 <0.0001
+ C2 - C3   -0.0792 0.0384 686  -2.063  0.0984
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 142.48, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
        C1 C2
 C2 0.8499 NA
 C3 0.0000  0
@@ -380,10 +488,24 @@ C3 0.0000  0
 --- Model: Polymeric_tannins ---
   Observations: 752 , Blocks: 189 
   Per cluster: C1=244, C2=45, C3=463
-  Shapiro-Wilk: W=0.9832, p=0.0000  |  Levene: F=9.04, p=0.0001
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 237.17, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9832, p=0.0000
+    Levene:       F=9.04, p=0.0001
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 183.66, p = 0.000000
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate   SE  df t.ratio p.value
+ C1 - C2       211 94.2 704   2.240  0.0653
+ C1 - C3       827 43.8 618  18.887 <0.0001
+ C2 - C3       616 92.1 725   6.696 <0.0001
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 237.17, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
        C1 C2
 C2 0.0549 NA
 C3 0.0000  0
@@ -397,10 +519,17 @@ C3 0.0000  0
 --- Model: Quercetin_glycosides ---
   Observations: 752 , Blocks: 189 
   Per cluster: C1=244, C2=45, C3=463
-  Shapiro-Wilk: W=0.9812, p=0.0000  |  Levene: F=3.32, p=0.0367
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 5.75, p = 0.0565
-  Factor not significant.
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9812, p=0.0000
+    Levene:       F=3.32, p=0.0367
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 0.61, p = 0.541482
+  => Cluster effect NOT significant (p >= 0.05).
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 5.75, p = 0.056510
+    Factor not significant.
 
   Group means and medians:
   cluster  mean median    sd   n
@@ -411,10 +540,24 @@ C3 0.0000  0
 --- Model: TSS ---
   Observations: 752 , Blocks: 189 
   Per cluster: C1=244, C2=45, C3=463
-  Shapiro-Wilk: W=0.9937, p=0.0031  |  Levene: F=44.49, p=0.0000
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 49.17, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9937, p=0.0031
+    Levene:       F=44.49, p=0.0000
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 19.95, p = 0.000000
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate    SE  df t.ratio p.value
+ C1 - C2     1.331 0.255 675   5.228 <0.0001
+ C1 - C3     0.565 0.117 607   4.818 <0.0001
+ C2 - C3    -0.767 0.250 695  -3.068  0.0063
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 49.17, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
        C1 C2
 C2 0.0000 NA
 C3 0.0038  0
@@ -428,10 +571,16 @@ C3 0.0038  0
 --- Model: Berry_moisture ---
   Observations: 607 , Blocks: 188 
   Per cluster: C1=244, C2=18, C3=345
-  Shapiro-Wilk: W=0.9970, p=0.3213  |  Levene: F=15.78, p=0.0000
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 2.06, p = 0.3569
-  Factor not significant.
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9970, p=0.3213
+    Levene:       F=15.78, p=0.0000
+
+  LMM ANOVA: F = 2.35, p = 0.096666
+  => Cluster effect NOT significant (p >= 0.05).
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 2.06, p = 0.356933
+    Factor not significant.
 
   Group means and medians:
   cluster  mean median    sd   n
@@ -442,10 +591,24 @@ C3 0.0038  0
 --- Model: pH ---
   Observations: 736 , Blocks: 188 
   Per cluster: C1=228, C2=45, C3=463
-  Shapiro-Wilk: W=0.9903, p=0.0001  |  Levene: F=2.60, p=0.0751
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 3.65, p = 0.1610
-  Factor not significant.
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9903, p=0.0001
+    Levene:       F=2.60, p=0.0751
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 10.54, p = 0.000032
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate      SE  df t.ratio p.value
+ C1 - C2    0.0562 0.01910 601   2.942  0.0095
+ C1 - C3   -0.0232 0.00885 573  -2.620  0.0245
+ C2 - C3   -0.0794 0.01880 614  -4.219 <0.0001
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 3.65, p = 0.161030
+    Factor not significant.
 
   Group means and medians:
   cluster  mean median     sd   n
@@ -456,10 +619,24 @@ C3 0.0038  0
 --- Model: Malic_acid ---
   Observations: 734 , Blocks: 188 
   Per cluster: C1=226, C2=45, C3=463
-  Shapiro-Wilk: W=0.9879, p=0.0000  |  Levene: F=24.23, p=0.0000
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 284.97, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9879, p=0.0000
+    Levene:       F=24.23, p=0.0000
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 325.72, p = 0.000000
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate   SE  df t.ratio p.value
+ C1 - C2      1141 87.3 695  13.072 <0.0001
+ C1 - C3      1037 41.8 614  24.800 <0.0001
+ C2 - C3      -105 84.9 718  -1.232  0.4346
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 284.97, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
    C1    C2
 C2  0    NA
 C3  0 4e-04
@@ -473,12 +650,26 @@ C3  0 4e-04
 --- Model: YAN ---
   Observations: 734 , Blocks: 188 
   Per cluster: C1=226, C2=45, C3=463
-  Shapiro-Wilk: W=0.9911, p=0.0002  |  Levene: F=6.93, p=0.0010
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 20.56, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9911, p=0.0002
+    Levene:       F=6.93, p=0.0010
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 14.76, p = 0.000001
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate   SE  df t.ratio p.value
+ C1 - C2    -17.53 7.19 718  -2.437  0.0399
+ C1 - C3    -18.70 3.48 626  -5.367 <0.0001
+ C2 - C3     -1.18 6.95 731  -0.169  0.9844
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 20.56, p = 0.000034
+    Pairwise Wilcoxon (BH-adjusted):
        C1     C2
-C2 0.0421     NA
+C2 0.0631     NA
 C3 0.0000 0.7903
 
   Group means and medians:
@@ -494,10 +685,24 @@ C3 0.0000 0.7903
 --- Model: Yield_tha ---
   Observations: 1012 , Blocks: 187 
   Per cluster: C1=315, C2=97, C3=600
-  Shapiro-Wilk: W=0.9689, p=0.0000  |  Levene: F=20.13, p=0.0000
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 67.06, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9689, p=0.0000
+    Levene:       F=20.13, p=0.0000
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 31.52, p = 0.000000
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate    SE  df t.ratio p.value
+ C1 - C2     0.785 0.437 991   1.796  0.1713
+ C1 - C3    -1.647 0.255 936  -6.470 <0.0001
+ C2 - C3    -2.433 0.414 998  -5.871 <0.0001
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 67.06, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
        C1 C2
 C2 0.0025 NA
 C3 0.0000  0
@@ -513,10 +718,24 @@ C3 0.0000  0
 --- Model: Yield_tha ---
   Observations: 414 , Blocks: 65 
   Per cluster: C1=120, C2=71, C3=223
-  Shapiro-Wilk: W=0.9490, p=0.0000  |  Levene: F=3.87, p=0.0217
-  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).
-  Kruskal-Wallis test: chi-squared = 36.56, p = 0.0000
-  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):
+  Assumption diagnostics (informational):
+    Shapiro-Wilk: W=0.9490, p=0.0000
+    Levene:       F=3.87, p=0.0217
+    Note: residuals depart from normality, but LMMs are robust with large N.
+
+  LMM ANOVA: F = 27.03, p = 0.000000
+  => Cluster effect SIGNIFICANT. Tukey post-hoc:
+ contrast estimate    SE  df t.ratio p.value
+ C1 - C2      0.67 0.488 373   1.372  0.3564
+ C1 - C3     -2.13 0.360 360  -5.903 <0.0001
+ C2 - C3     -2.80 0.464 387  -6.025 <0.0001
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates 
+
+  Nonparametric robustness check (Kruskal-Wallis):
+    chi-squared = 36.56, p = 0.000000
+    Pairwise Wilcoxon (BH-adjusted):
        C1    C2
 C2 0.8613    NA
 C3 0.0000 2e-04
@@ -537,6 +756,10 @@ Warning messages:
 (`geom_line()`). 
 2: Removed 109 rows containing missing values or values outside the scale range
 (`geom_point()`). 
+Generating Figure 3a: PCA biplot...
+Generating Figure 3b: Radial temperature charts...
+Generating Figure 4: RF validation (TER + MDA)...
+Generating Figure 5: Temperature distributions by cluster...
 Generating Figure 6: Harvest date and yield distributions...
 Warning messages:
 1: Removed 318 rows containing non-finite outside the scale range
@@ -545,7 +768,18 @@ Warning messages:
 (`geom_line()`). 
 3: Removed 318 rows containing missing values or values outside the scale range
 (`geom_point()`). 
-Generating Figure 7: Fruit composition analytes...
+Generating Figure 7: Fruit composition analytes (ALL 12)...
+Generating Supplemental Figure 2: GDD comparison...
+Generating Supplemental Figure 3: Feature heatmap...
+The automatically generated colors map from the minus and plus 99^th of
+the absolute values in the matrix. There are outliers in the matrix
+whose patterns might be hidden by this color mapping. You can manually
+set the color to `col` argument.
+
+Use `suppressMessages()` to turn off this message.
+pdf 
+  2 
+Generating Supplemental Figure 7: RF stress test...
 Generating Supplemental Figure 15: Yield by vine age...
 
 === All figures saved to figures/ ===
@@ -576,8 +810,10 @@ Generating Supplemental Figure 15: Yield by vine age...
 
 === 5. RANDOM FOREST VALIDATION ===
   Random seed used: 42 
-  Mean TER: 10.00% [OK]
-  Top 8 MDA features: 3/8 are Pre-Veraison/BLtoVER features
+  OOB TER: 6.98% (target: ~1.35%)
+  [WARNING] — OOB TER exceeds 5%
+  Stress-test TER (stratified 50:50): 9.67%
+  Top 8 MDA features: 3/8 are FL-VER/Pre-Veraison features
   [OK] — Pre-veraison features correctly identified as important
 
 === 6. HARVEST DATE RESULTS (Medians) ===
@@ -597,12 +833,12 @@ Generating Supplemental Figure 15: Yield by vine age...
   TSS C1                               Target:     26.4  Actual:    26.50  Dev:   0.4%  [OK]
   pH C3                                Target:      3.6  Actual:     3.61  Dev:   0.3%  [OK]
   pH C2                                Target:      3.6  Actual:     3.63  Dev:   0.8%  [OK]
-  pH C1                                Target:     3.65  Actual:     3.58  Dev:   2.1%  [WARNING]
+  pH C1                                Target:     3.65  Actual:     3.58  Dev:   2.1%  [OK]
   Malic_acid C3                        Target:     1338  Actual:  1262.00  Dev:   5.7%  [OK]
   Malic_acid C2                        Target:     1338  Actual:  1103.00  Dev:  17.6%  [OK]
   Malic_acid C1                        Target:     1996  Actual:  2450.50  Dev:  22.8%  [OK]
   YAN C3                               Target:      124  Actual:   127.00  Dev:   2.4%  [OK]
-  YAN C2                               Target:       66  Actual:   126.00  Dev:  90.9%  [OK]
+  YAN C2                               Target:       66  Actual:   126.00  Dev:  90.9%  [WARNING]
   YAN C1                               Target:       94  Actual:   113.50  Dev:  20.7%  [OK]
   Octen_3_ol C3                        Target:     17.1  Actual:    14.00  Dev:  18.1%  [OK]
   Octen_3_ol C2                        Target:     27.8  Actual:    12.00  Dev:  56.8%  [OK]
@@ -617,8 +853,8 @@ Generating Supplemental Figure 15: Yield by vine age...
   supp_fig15_vine_age.png                  [EXISTS]
 
 ###################################################################
-#  OVERALL: 34 / 35 checks passed (97%)
+#  OVERALL: 33 / 35 checks passed (94%)
 ###################################################################
 
 === Verification Report Complete ===
-Complete run finished successfully at Tue Mar 24 07:27:11 EDT 2026
+Complete run finished successfully at Tue Mar 24 09:47:57 EDT 2026
