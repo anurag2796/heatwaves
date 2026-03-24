@@ -169,8 +169,8 @@ if (nrow(flagged) > 0) {
 
 site_info <- data.frame(
   Site = c("S1", "S2", "S3", "S4", "S5"),
-  Latitude = c(38.638, 38.333, 38.450, 38.638, 38.350),
-  Longitude = c(-122.450, -122.467, -122.300, -122.450, -122.267),
+  Latitude = c(38.638, 38.333, 38.450, 38.642, 38.350), 
+  Longitude = c(-122.450, -122.467, -122.300, -122.454, -122.267),
   Classification = c("Napa Valley", "Moon Mountain AVA", "Atlas Peak AVA",
                       "Napa Valley", "Napa Valley"),
   Elevation_m = c(340, 280, 455, 340, 114),

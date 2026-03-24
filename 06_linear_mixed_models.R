@@ -147,18 +147,38 @@ run_lmm_with_checks <- function(response_var, data, formula_str = NULL) {
     cat("\n  Pairwise comparisons:\n")
     print(summary(emm$contrasts))
   } else {
-    # Kruskal-Wallis + pairwise Wilcoxon
-    kw <- kruskal.test(as.formula(paste(response_var, "~ cluster")), data = df)
-    cat(sprintf("  Kruskal-Wallis: chi-sq=%.2f, df=%d, p=%.4f\n",
-                kw$statistic, kw$parameter, kw$p.value))
-    results$kruskal <- kw
-
-    if (kw$p.value < 0.05) {
-      pw <- pairwise.wilcox.test(df[[response_var]], df$cluster, p.adjust.method = "BH")
-      cat("  Pairwise Wilcoxon (BH-adjusted):\n")
-      print(pw$p.value)
-      results$pairwise <- pw
+    cat("  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...\n")
+    if (!requireNamespace("brms", quietly = TRUE)) {
+      install.packages("brms", repos = "https://cloud.r-project.org")
     }
+    library(brms)
+    
+    # Use Student-t family to handle outliers and heavy tails in truncated datasets
+    bayesian_model <- brm(
+      formula = as.formula(paste(response_var, "~ cluster + (1 | block_ID)")),
+      data = df,
+      family = student(), 
+      prior = c(
+        prior(normal(0, 10), class = "b") # Shrinkage prior to stabilize cluster fixed-effects
+      ),
+      chains = 4, 
+      iter = 2000, 
+      warmup = 500,
+      control = list(adapt_delta = 0.95),
+      refresh = 0
+    )
+    
+    results$bayesian_model <- summary(bayesian_model)
+    cat("\n  Bayesian model summary:\n")
+    print(results$bayesian_model)
+    
+    # Extract estimated marginal means using the Bayesian model
+    emm <- emmeans(bayesian_model, pairwise ~ cluster)
+    results$emmeans <- emm
+    cat("\n  Bayesian estimated marginal means:\n")
+    print(summary(emm$emmeans))
+    cat("\n  Bayesian pairwise comparisons:\n")
+    print(summary(emm$contrasts))
   }
 
   # Group means

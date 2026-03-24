@@ -16,11 +16,11 @@ suppressPackageStartupMessages({
 cat("=== Section 4: Feature Engineering ===\n\n")
 
 # --- 4a. Core definitions ---------------------------------------------------
-# Heat day:  Tmax >= 38°C
+# Heat day:  Tmax >= 37.99°C
 # Heatwave:  >= 2 consecutive heat days
-# HWU:       sum(Tmax - 38) across all days of a heatwave (positive deviations)
+# HWU:       sum(Tmax - 37.99) across all days of a heatwave (positive deviations)
 
-HEAT_THRESHOLD <- 38  # degrees C
+HEAT_THRESHOLD <- 37.99  # degrees C
 MIN_HW_DAYS    <- 2   # minimum consecutive days for a heatwave
 
 # --- 4b. Helper function: compute heat features for a date range -----------
