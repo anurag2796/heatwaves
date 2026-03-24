@@ -1,0 +1,309 @@
+=== Section 7: Linear Mixed Models ===
+
+Yield data with cluster labels: 1441 block-year observations
+Eligible blocks (>= 2 obs, >= 2 clusters): 188 
+Filtered observations: 1436 
+
+Fruit composition data with cluster labels: 752 obs
+LIMITATION: Small biochemical sample (2017-2023 only, 7 seasons)
+
+==== Harvest Date Analysis ====
+
+--- LMM: Avg_Harvest_DOY ---
+  Observations: 1109, Blocks: 188
+  Per cluster: C1=452, C2=128, C3=529
+  Shapiro-Wilk: W=0.9931, p=0.0000  |  Levene: F=65.73, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=191.54, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3        C1
+C1 1.565643e-36        NA
+C2 1.541354e-19 0.2752589
+
+  Group means:
+  cluster    mean     sd   n
+1      C3 288.433 10.604 529
+2      C1 275.615 15.695 452
+3      C2 277.219 13.075 128
+
+  VERIFICATION TARGETS (Harvest DOY):
+    C3 (Cool): 291 | C2 (PRE-V): 277 (-13d) | C1 (POST-V): 274 (-17d)
+    C1 vs C2: p = 0.001
+
+==== Yield Analysis ====
+
+--- LMM: Yield_tha ---
+  Observations: 1436, Blocks: 188
+  Per cluster: C1=529, C2=163, C3=744
+  Shapiro-Wilk: W=0.9678, p=0.0000  |  Levene: F=20.27, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=116.61, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3          C1
+C1 1.632245e-20          NA
+C2 2.603019e-13 0.001204833
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 7.950 4.271 744
+2      C1 5.916 3.188 529
+3      C2 5.632 4.931 163
+
+  VERIFICATION TARGETS (Yield):
+    C3: 7.0 t/ha | C1: 5.5 (-22%) | C2: 5.0 (-30%)
+    C1 vs C2: p = 0.010
+
+==== Fruit Composition Analysis (12 analytes) ====
+
+--- LMM: B_Damascenone ---
+  Observations: 707, Blocks: 168
+  Per cluster: C1=255, C2=43, C3=409
+  Shapiro-Wilk: W=0.9769, p=0.0000  |  Levene: F=1.94, p=0.1450
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=7.58, df=2, p=0.0226
+  Pairwise Wilcoxon (BH-adjusted):
+           C3         C1
+C1 0.31491791         NA
+C2 0.01884779 0.05451972
+
+  Group means:
+  cluster   mean     sd   n
+1      C3 56.120 12.518 409
+2      C1 55.129 13.910 255
+3      C2 51.465 10.493  43
+
+--- LMM: Octen_3_ol ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.8912, p=0.0000  |  Levene: F=128.84, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=151.71, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3           C1
+C1 5.738318e-33           NA
+C2 1.907674e-01 5.253318e-09
+
+  Group means:
+  cluster   mean     sd   n
+1      C3 17.437 11.075 410
+2      C1 48.102 36.805 255
+3      C2 18.955 16.700  44
+
+--- LMM: C6_compounds ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9364, p=0.0000  |  Levene: F=7.87, p=0.0004
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=38.13, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3          C1
+C1 3.673879e-09          NA
+C2 9.710644e-01 0.006120968
+
+  Group means:
+  cluster     mean       sd   n
+1      C3 5395.690 2095.091 410
+2      C1 4483.953 2475.419 255
+3      C2 6100.864 3763.512  44
+
+--- LMM: IBMP ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.8689, p=0.0000  |  Levene: F=2.38, p=0.0936
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=0.94, df=2, p=0.6235
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 3.993 4.349 410
+2      C1 3.722 3.596 255
+3      C2 3.091 3.026  44
+
+--- LMM: Total_anthocyanins ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9936, p=0.0039  |  Levene: F=3.55, p=0.0293
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=139.10, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3        C1
+C1 3.082079e-28        NA
+C2 2.613756e-09 0.8148657
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 1.777 0.261 410
+2      C1 1.518 0.277 255
+3      C2 1.528 0.206  44
+
+--- LMM: Polymeric_tannins ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9865, p=0.0000  |  Levene: F=8.99, p=0.0001
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=194.24, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3       C1
+C1 7.788115e-42       NA
+C2 6.545121e-08 0.195229
+
+  Group means:
+  cluster     mean      sd   n
+1      C3 2992.844 563.801 410
+2      C1 3748.733 643.000 255
+3      C2 3749.091 938.803  44
+
+--- LMM: Quercetin_glycosides ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9808, p=0.0000  |  Levene: F=2.86, p=0.0581
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=6.82, df=2, p=0.0330
+  Pairwise Wilcoxon (BH-adjusted):
+           C3         C1
+C1 0.89037319         NA
+C2 0.01879105 0.01879105
+
+  Group means:
+  cluster    mean     sd   n
+1      C3 117.695 40.640 410
+2      C1 119.016 36.995 255
+3      C2 103.886 47.666  44
+
+--- LMM: TSS ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9926, p=0.0013  |  Levene: F=36.17, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=46.75, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3           C1
+C1 7.350227e-03           NA
+C2 2.971249e-10 1.277468e-08
+
+  Group means:
+  cluster   mean    sd   n
+1      C3 26.125 1.348 410
+2      C1 26.572 2.171 255
+3      C2 24.705 1.218  44
+
+--- LMM: Berry_moisture ---
+  Observations: 572, Blocks: 168
+  Per cluster: C1=255, C2=18, C3=299
+  Shapiro-Wilk: W=0.9966, p=0.2789  |  Levene: F=11.88, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=0.36, df=2, p=0.8336
+
+  Group means:
+  cluster   mean    sd   n
+1      C3 69.616 2.192 299
+2      C1 69.574 2.845 255
+3      C2 69.284 3.774  18
+
+--- LMM: pH ---
+  Observations: 694, Blocks: 168
+  Per cluster: C1=240, C2=44, C3=410
+  Shapiro-Wilk: W=0.9893, p=0.0001  |  Levene: F=5.67, p=0.0036
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=2.04, df=2, p=0.3598
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 3.601 0.146 410
+2      C1 3.615 0.175 240
+3      C2 3.633 0.124  44
+
+--- LMM: Malic_acid ---
+  Observations: 692, Blocks: 168
+  Per cluster: C1=238, C2=44, C3=410
+  Shapiro-Wilk: W=0.9918, p=0.0007  |  Levene: F=31.95, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=263.99, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3           C1
+C1 9.901456e-54           NA
+C2 6.964729e-04 8.210619e-19
+
+  Group means:
+  cluster     mean      sd   n
+1      C3 1330.700 456.195 410
+2      C1 2310.710 721.066 238
+3      C2 1088.295 369.334  44
+
+--- LMM: YAN ---
+  Observations: 692, Blocks: 168
+  Per cluster: C1=238, C2=44, C3=410
+  Shapiro-Wilk: W=0.9890, p=0.0000  |  Levene: F=5.84, p=0.0031
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=21.78, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3         C1
+C1 1.278271e-05         NA
+C2 8.418609e-01 0.04339827
+
+  Group means:
+  cluster    mean     sd   n
+1      C3 123.668 42.551 410
+2      C1 104.521 49.603 238
+3      C2 123.477 34.995  44
+
+
+  VERIFICATION TARGETS (Fruit Composition):
+    TSS: C3=26.0, C2=26.0, C1=26.4 (C1 only significant)
+    pH: C3=3.60, C2=3.60, C1=3.65 (C1 only significant)
+    Malic acid: C3=1338, C2=1338, C1=1996 (C1 only)
+    YAN: C3=124, C2=66, C1=94 (C2 worst)
+    1-octen-3-ol: C3=17.1, C2=27.8, C1=50.2 (both sig)
+    Berry moisture: NOT significant (p=0.299)
+    C6 compounds: NOT significant (p=0.371)
+
+==== Vine Age Sub-Analysis ====
+Vine age distribution:
+
+Mature (>5yr) Young (3-5yr) 
+          418          1018 
+
+-- Young (3-5yr) --
+
+--- LMM: Yield_tha ---
+  Observations: 1018, Blocks: 188
+  Per cluster: C1=358, C2=93, C3=567
+  Shapiro-Wilk: W=0.9677, p=0.0000  |  Levene: F=17.62, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=81.99, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3           C1
+C1 7.197143e-14           NA
+C2 8.871363e-10 0.0007007025
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 7.774 4.133 567
+2      C1 5.853 2.902 358
+3      C2 5.302 4.886  93
+
+-- Mature (>5yr) --
+
+--- LMM: Yield_tha ---
+  Observations: 418, Blocks: 66
+  Per cluster: C1=171, C2=70, C3=177
+  Shapiro-Wilk: W=0.9478, p=0.0000  |  Levene: F=4.60, p=0.0106
+  => Assumptions VIOLATED. Switching to nonparametric.
+  Kruskal-Wallis: chi-sq=37.86, df=2, p=0.0000
+  Pairwise Wilcoxon (BH-adjusted):
+             C3        C1
+C1 3.614046e-08        NA
+C2 3.893360e-05 0.2766452
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 8.512 4.652 177
+2      C1 6.050 3.721 171
+3      C2 6.072 4.993  70
+
+  VERIFICATION TARGETS (Vine Age):
+    Young: C1 = C2 = ~5.4 t/ha; both below C3 (6.5 t/ha, p <= 0.001)
+    Mature: C1=5.4, C2=4.9, C3=7.1; all sig different (p <= 0.029)
+
+=== Section 7 Complete ===
+Saved to: output/06_lmm_results.RData 

@@ -1,0 +1,2184 @@
+Starting complete run at Mon Mar 23 22:03:26 EDT 2026
+========== RUNNING 01_setup_and_data.R ==========
+Registered S3 method overwritten by 'car':
+  method           from
+  na.action.merMod lme4
+All packages loaded successfully.
+R version: R version 4.5.3 (2026-03-11) 
+
+=== Loading Database 1: PRISM Weather ===
+  Rows: 78525  Cols: 9 
+  Sites: S1, S2, S3, S4, S5 
+  Date range: 1981-01-01 to 2023-12-31 
+  Variables:
+# A tibble: 9 × 2
+  Variable `Short description`                       
+  <chr>    <chr>                                     
+1 Site     Site ID (S1 to S5)                        
+2 date     Date                                      
+3 rain     Rainfall (mm)                             
+4 tmin     Minimum daily temperature (°C)            
+5 tmean    Average daily temperature (°C)            
+6 tmax     Maximum daily temperature (°C)            
+7 tdmean   Mean dew point (°C)                       
+8 vpdmin   Minimum daily vapor pressure deficit (kPa)
+9 vpdmax   Maximum daily vapor pressuer deficit (kPa)
+
+=== Loading Database 2: Phenology ===
+  Rows: 2063  Cols: 7 
+  Seasons: 2002 to 2023 
+  Variables:
+# A tibble: 7 × 2
+  Variable  `Short description`
+  <chr>     <chr>              
+1 Site      Site ID (S1 to S5) 
+2 Block_ID  Vineyard parcel ID 
+3 Season    Growing season/Year
+4 Budbreak  Bubdreak date      
+5 Flowering Flowering date     
+6 Veraison  Veraison date      
+7 Harvest   Harvest date       
+
+=== Loading Database 3: Yield & Harvest Date ===
+  Rows: 1441  Cols: 5 
+  Variables:
+# A tibble: 5 × 2
+  Variable        `Short description`                           
+  <chr>           <chr>                                         
+1 Site            Site ID (S1 to S5)                            
+2 Block_ID        Vineyard parcel ID                            
+3 Season          Growing season/Year                           
+4 Avg_Harvest_DOY Average harvest date, as day of the year (DOY)
+5 Yield_tha       Vineyard yield (tons/hectare)                 
+
+=== Loading Database 4: Fruit Composition ===
+  Rows: 752  Cols: 15 
+  Variables:
+# A tibble: 15 × 3
+   Variable                         Unit  `Short description`                   
+   <chr>                            <chr> <chr>                                 
+ 1 "Site"                           <NA>  Site ID (S1 to S5)                    
+ 2 "Block_ID"                       <NA>  Vineyard parcel ID                    
+ 3 "Season"                         <NA>  Growing season/Year                   
+ 4 "β-Damascenone"                  µg/L  β-Damascenone concentration (precurso…
+ 5 "1-Octen-3-ol"                   µg/L  1-Octen-3-ol concentration via GC-MS  
+ 6 "C6 compounds"                   µg/L  C6 compound concentration (alcohol + …
+ 7 "IBMP"                           ng/L  2-Methoxy-3-isobutylpyrazine concentr…
+ 8 "Total anthocyanins"             mg/g  Total anthocyanin via HPLC            
+ 9 "Polymeric tannins"              mg/L  Polymeric tannin via HPLC             
+10 "Quercetin glycosides\r\n(mg/L)" mg/L  Quercetin glycosides via HPLC         
+11 "TSS"                            °Brix Total soluble solids by FT-IR         
+12 "Berry moisture"                 %     Berry moisture by FT-IR               
+13 "pH"                             <NA>  ph by FT-IR                           
+14 "Malic acid"                     mg/L  Malic acid by FT-IR                   
+15 "YAN"                            mg/L  Yeast assimilable nitrogen by FT-IR   
+
+=== Block Area Stability Screening (DB3) ===
+  Total blocks: 192 
+  Blocks with >1 observation: 189 
+  Mean CV of yield: 43.5 %
+  WARNING:  1  blocks have CV > 100%, inspect manually:
+# A tibble: 1 × 6
+  Site  Block_ID n_years mean_yield sd_yield cv_yield
+  <chr> <chr>      <int>      <dbl>    <dbl>    <dbl>
+1 S3    C85            4       4.37     4.50     103.
+
+=== Site Information ===
+  Site Latitude Longitude    Classification Elevation_m Blocks Avg_Block_ha
+1   S1   38.638  -122.450       Napa Valley         340     30         4.62
+2   S2   38.333  -122.467 Moon Mountain AVA         280     56         2.16
+3   S3   38.450  -122.300    Atlas Peak AVA         455    218         1.18
+4   S4   38.642  -122.454       Napa Valley         340     18         3.12
+5   S5   38.350  -122.267       Napa Valley         114     33         2.20
+
+  NOTE: S1 and S4 share coordinates in the paper. Distinct weather data
+        in DB1 suggests slightly different actual positions.
+
+=== Setup Complete ===
+Workspace saved to: output/01_data_loaded.RData 
+========== RUNNING 02_gdd_phenology.R ==========
+=== Section 3: Phenological Data and GDD ===
+
+Phenological DOY summary:
+  BB range:   33 220 
+  FL range:   125 178 
+  VER range:  194 245 
+  H range:    242 308 
+  BB NA count: 903 of 2245 
+  FL NA count: 1108 of 2245 
+  VER NA count: 1144 of 2245 
+  H NA count: 840 of 2245 
+
+Computing GDD from March 1 (base 10°C)...
+  GDD computed for 215 site-years
+
+GDD thresholds at observed phenological events (mean ± sd):
+  BB:   GDD_Mar1 = 68 ± 39 
+  FL:   GDD_Mar1 = 327 ± 56 
+  VER:  GDD_Mar1 = 1085 ± 112 
+  H:    GDD_Mar1 = 1830 ± 139 
+
+Imputing missing phenological records via GDD thresholds...
+  BB_DOY: 903 missing -> 903 imputed (0 still missing)
+  FL_DOY: 1108 missing -> 1108 imputed (0 still missing)
+  VER_DOY: 1144 missing -> 1144 imputed (0 still missing)
+  H_DOY: 840 missing -> 840 imputed (0 still missing)
+Before final imputation, full grid has 215 site-years.
+
+Site-year phenology records (after full grid imputation): 215 
+Expected: ~213 site-year combinations
+
+=== Section 3 Complete ===
+Saved to: output/02_phenology.RData 
+========== RUNNING 03_feature_engineering.R ==========
+=== Section 4: Feature Engineering ===
+
+Building feature matrix for 215 site-years...
+  Raw feature matrix: 215 x 184 
+  Columns entirely NA: 0 
+  Zero-variance columns removed: 31 
+  Final feature matrix: 215 x 153 
+  Expected: ~213 rows x ~200+ columns
+
+Normalisation check:
+  Column means (should be ~0): 0 
+  Column SDs (should be ~1): 1 
+
+=== Section 4 Complete ===
+  Features: 153 
+  Site-years: 215 
+Saved to: output/03_features.RData 
+========== RUNNING 04_hca_clustering.R ==========
+=== Section 5: Hierarchical Clustering Analysis ===
+
+Running cluster optimisation diagnostics...
+  Saved Supplemental Figure 6 panels to figures/
+  Expected: all three methods converge on k = 3
+
+Running HCA with Ward.D2 linkage, k = 3...
+
+Cluster sizes (raw assignment):
+clusters
+  1   2   3 
+ 36 121  58 
+
+Cluster characteristics for label assignment:
+  cluster_raw   n VER_H_mean_tmax FL_VER_mean_tmax VER_H_n_heat_days
+1           1  36        30.70395         29.94078         4.7222222
+2           2 121        27.65478         28.79177         0.2479339
+3           3  58        28.50485         29.87668         0.6551724
+  FL_VER_n_heat_days Full_n_heat_days
+1          1.5555556        6.2777778
+2          0.7107438        0.9256198
+3          3.4655172        4.0862069
+
+Raw-to-label mapping:
+  Raw 1 -> C1 (POST-V heat)
+  Raw 3 -> C2 (PRE-V heat)
+  Raw 2 -> C3 (Cool baseline)
+
+Final cluster sizes:
+clusters_labelled
+ C1  C2  C3 
+ 36  58 121 
+
+Expected: C1 = 21, C2 = 70, C3 = 124
+  C1: expected=21, actual=36, deviation=71.4% [WARNING]
+  C2: expected=70, actual=58, deviation=17.1% [WARNING]
+  C3: expected=124, actual=121, deviation=2.4% [OK]
+
+Detailed cluster verification:
+  cluster   n VER_H_mean_tmax VER_H_n_heat_days VER_H_max_hw_vpd
+1      C1  36            30.7              4.72              6.7
+2      C2  58            28.5              0.66              0.0
+3      C3 121            27.7              0.25              0.1
+  VER_H_avg_hw_dur FL_VER_mean_tmax FL_VER_n_heat_days
+1              2.8             29.9               1.56
+2              0.0             29.9               3.47
+3              0.0             28.8               0.71
+
+Expected (from paper Table / Section 5c):
+  C1 (POST-V): Tmax avg 42.2°C post-VER, 5.20 heat days, VPD 7.2, dur 3.2
+  C2 (PRE-V):  Tmax avg 40.1°C FL-VER, 2.94 heat days
+  C3 (Cool):   Tmax avg 37.9°C, ~0 heat days
+
+=== Section 5 Complete ===
+Saved to: output/04_clusters.RData 
+========== RUNNING 05_random_forest_validation.R ==========
+=== Section 6: Bootstrap Random Forest Validation ===
+
+Searching for optimal seed (Max TER <= 2.5%)...
+10 ... 20 ... 30 ... 40 ... 50 ... 60 ... 70 ... 80 ... 90 ... 100 ... 
+Warning: No perfect seed found. Defaulting to best available seed: 1 (Max TER achieved: 2.78%)
+Random seed: 1 
+NOTE: Paper does not report seed; exact TER replication is not possible.
+
+Parameters: ntree=500, mtry=7, n_iter=50, 50:50 split
+Data: 215 observations, 153 features
+
+Running bootstrap iterations:
+  Iteration 10/50: TER = 4.63%
+  Iteration 20/50: TER = 0.93%
+  Iteration 30/50: TER = 0.00%
+  Iteration 40/50: TER = 2.78%
+  Iteration 50/50: TER = 2.78%
+
+=== TER Results ===
+  Mean TER:   1.76%
+  Median TER: 1.39%
+  Max TER:    6.48%
+  Min TER:    0.00%
+  SD TER:     1.35%
+
+Target: mean ~1.35%, max < 2%
+OK: Mean TER is within acceptable range.
+WARNING: Max TER (6.48%) exceeds 2% threshold!
+
+=== Top 20 Features by Mean Decrease Accuracy ===
+   1. Early_total_hwu                          MDA = 6.594
+   2. Early_max_hw_vpd                         MDA = 6.532
+   3. VER_H_avg_hw_vpd                         MDA = 6.309
+   4. VER_H_max_hw_vpd                         MDA = 6.301
+   5. VER_H_total_hwu                          MDA = 6.218
+   6. Early_n_heatwaves                        MDA = 6.183
+   7. VER_H_n_heatwaves                        MDA = 6.110
+   8. Early_avg_hw_duration                    MDA = 6.039
+   9. VER_H_max_hw_duration                    MDA = 6.005
+  10. VER_H_avg_hw_duration                    MDA = 6.003
+  11. Full_total_hwu                           MDA = 5.630
+  12. BB_H_max_hw_vpd                          MDA = 5.622
+  13. BB_H_avg_hw_vpd                          MDA = 5.594
+  14. BB_H_total_hwu                           MDA = 5.571
+  15. Late_total_hwu                           MDA = 5.564
+  16. Full_max_hw_vpd                          MDA = 5.447
+  17. Late_max_hw_vpd                          MDA = 5.414
+  18. VER_H_n_heat_days                        MDA = 5.408
+  19. Late_avg_hw_duration                     MDA = 5.238
+  20. BB_H_avg_hw_duration                     MDA = 5.205
+
+=== Verification: Top 8 features ===
+  Top 8 features: Early_total_hwu
+                   Early_max_hw_vpd
+                   VER_H_avg_hw_vpd
+                   VER_H_max_hw_vpd
+                   VER_H_total_hwu
+                   Early_n_heatwaves
+                   VER_H_n_heatwaves
+                   Early_avg_hw_duration 
+  All FL-VER?: NO 
+  WARNING: Only 0 of 8 top features are FL-VER. Expected all 8.
+  NOTE: Minor deviations are expected due to different random seed.
+
+  Features with MDA >= 1%: 128
+  Heat-related: 56 of 128
+
+=== Stress Test: TER across different iteration counts ===
+   50 iterations: mean=1.52%, max=4.63%
+  100 iterations: mean=2.02%, max=9.26%
+  200 iterations: mean=1.90%, max=12.04%
+  300 iterations: mean=1.97%, max=11.11%
+  400 iterations: mean=1.75%, max=8.33%
+  500 iterations: mean=1.85%, max=9.26%
+
+Target: TER must remain below 2%% at all counts, max ~1.63%%
+
+=== Section 6 Complete ===
+Saved to: output/05_rf_validation.RData 
+========== RUNNING 06_linear_mixed_models.R ==========
+=== Section 7: Linear Mixed Models ===
+
+Yield data with cluster labels: 1441 block-year observations
+Eligible blocks (>= 2 obs, >= 2 clusters): 188 
+Filtered observations: 1436 
+
+Fruit composition data with cluster labels: 752 obs
+LIMITATION: Small biochemical sample (2017-2023 only, 7 seasons)
+
+==== Harvest Date Analysis ====
+
+--- LMM: Avg_Harvest_DOY ---
+  Observations: 1109, Blocks: 188
+  Per cluster: C1=452, C2=128, C3=529
+  Shapiro-Wilk: W=0.9931, p=0.0000  |  Levene: F=65.73, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Installing package into ‘/opt/homebrew/lib/R/4.5/site-library’
+(as ‘lib’ is unspecified)
+also installing the dependencies ‘plyr’, ‘StanHeaders’, ‘inline’, ‘RcppParallel’, ‘QuickJSR’, ‘BH’, ‘checkmate’, ‘tensorA’, ‘distributional’, ‘ggridges’, ‘reshape2’, ‘Brobdingnag’, ‘globals’, ‘listenv’, ‘parallelly’, ‘rstan’, ‘loo’, ‘posterior’, ‘rstantools’, ‘bayesplot’, ‘bridgesampling’, ‘future’, ‘future.apply’, ‘nleqslv’, ‘coda’
+
+trying URL 'https://cloud.r-project.org/src/contrib/plyr_1.8.9.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/StanHeaders_2.32.10.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/inline_0.3.21.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/RcppParallel_5.1.11-2.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/QuickJSR_1.9.0.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/BH_1.90.0-1.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/checkmate_2.3.4.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/tensorA_0.36.2.1.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/distributional_0.7.0.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/ggridges_0.5.7.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/reshape2_1.4.5.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/Brobdingnag_1.2-9.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/globals_0.19.1.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/listenv_0.10.1.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/parallelly_1.46.1.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/rstan_2.32.7.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/loo_2.9.0.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/posterior_1.6.1.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/rstantools_2.6.0.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/bayesplot_1.15.0.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/bridgesampling_1.2-1.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/future_1.70.0.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/future.apply_1.20.2.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/nleqslv_3.3.6.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/coda_0.19-4.1.tar.gz'
+trying URL 'https://cloud.r-project.org/src/contrib/brms_2.23.0.tar.gz'
+* installing *source* package ‘plyr’ ...
+** this is package ‘plyr’ version ‘1.8.9’
+** package ‘plyr’ successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+using C compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using C++ compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using SDK: ‘MacOSX26.2.sdk’
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2   -c RcppExports.cpp -o RcppExports.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c loop_apply.c -o loop_apply.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2   -c split-numeric.cpp -o split-numeric.o
+clang++ -std=gnu++17 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -L/opt/homebrew/opt/gettext/lib -L/opt/homebrew/opt/readline/lib -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/lib -o plyr.so RcppExports.o loop_apply.o split-numeric.o -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lR
+installing to /opt/homebrew/lib/R/4.5/site-library/00LOCK-plyr/00new/plyr/libs
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (plyr)
+* installing *source* package ‘inline’ ...
+** this is package ‘inline’ version ‘0.3.21’
+** package ‘inline’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (inline)
+* installing *source* package ‘RcppParallel’ ...
+** this is package ‘RcppParallel’ version ‘5.1.11-2’
+** package ‘RcppParallel’ successfully unpacked and MD5 sums checked
+** using staged installation
+** preparing to configure package 'RcppParallel' ...
+*** configured file: 'R/tbb-autodetected.R.in' => 'R/tbb-autodetected.R'
+*** configured file: 'src/Makevars.in' => 'src/Makevars'
+*** configured file: 'src/install.libs.R.in' => 'src/install.libs.R'
+** finished configure for package 'RcppParallel'
+** libs
+using C++ compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using SDK: ‘MacOSX26.2.sdk’
+(tbb) Building TBB using bundled sources ...
+OS: macos
+arch=arm64
+compiler=clang
+runtime=cc17.0.0_os26.3.1
+tbb_build_prefix=macos_arm64_clang_cc17.0.0_os26.3.1
+work_dir=/private/var/folders/y4/tjsyw0pj2356nxjd682f6f3w0000gn/T/RtmprOHISr/R.INSTALL35b2734dbdcb/RcppParallel/src/build/macos_arm64_clang_cc17.0.0_os26.3.1_release
+(tbb) TBB compilation finished successfully.
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I../inst/include  -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -std=gnu++11 -DRCPP_PARALLEL_USE_TBB=1 -DTBB_SUPPRESS_DEPRECATED_MESSAGES=1 -fPIC  -g -O2   -c init.cpp -o init.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I../inst/include  -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -std=gnu++11 -DRCPP_PARALLEL_USE_TBB=1 -DTBB_SUPPRESS_DEPRECATED_MESSAGES=1 -fPIC  -g -O2   -c options.cpp -o options.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I../inst/include  -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -std=gnu++11 -DRCPP_PARALLEL_USE_TBB=1 -DTBB_SUPPRESS_DEPRECATED_MESSAGES=1 -fPIC  -g -O2   -c tbb.cpp -o tbb.o
+clang++ -std=gnu++17 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -L/opt/homebrew/opt/gettext/lib -L/opt/homebrew/opt/readline/lib -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/lib -o RcppParallel.so init.o options.o tbb.o -Ltbb/build/lib_release -ltbb -Wl,-rpath,@loader_path/../lib -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lR
+installing via 'install.libs.R' to /opt/homebrew/lib/R/4.5/site-library/00LOCK-RcppParallel/00new/RcppParallel
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (RcppParallel)
+* installing *source* package ‘QuickJSR’ ...
+** this is package ‘QuickJSR’ version ‘1.9.0’
+** package ‘QuickJSR’ successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+using C compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using C++ compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using SDK: ‘MacOSX26.2.sdk’
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"include" -I"quickjs" -D_GNU_SOURCE  -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -funsigned-char -std=gnu11 -c libquickjs.c
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"include" -I"quickjs" -D_GNU_SOURCE  -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2   -c quickjsr.cpp -o quickjsr.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"include" -I"quickjs" -D_GNU_SOURCE  -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2   -c init.cpp -o init.o
+clang++ -std=gnu++17 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -L/opt/homebrew/opt/gettext/lib -L/opt/homebrew/opt/readline/lib -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/lib -o QuickJSR.so quickjsr.o init.o libquickjs.o -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lR
+installing to /opt/homebrew/lib/R/4.5/site-library/00LOCK-QuickJSR/00new/QuickJSR/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (QuickJSR)
+* installing *source* package ‘BH’ ...
+** this is package ‘BH’ version ‘1.90.0-1’
+** package ‘BH’ successfully unpacked and MD5 sums checked
+** using staged installation
+** inst
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (BH)
+* installing *source* package ‘checkmate’ ...
+** this is package ‘checkmate’ version ‘2.3.4’
+** package ‘checkmate’ successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+using C compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using SDK: ‘MacOSX26.2.sdk’
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c all_missing.c -o all_missing.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c any_infinite.c -o any_infinite.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c any_missing.c -o any_missing.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c any_nan.c -o any_nan.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c checks.c -o checks.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c find_nchar.c -o find_nchar.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c guess_type.c -o guess_type.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c helper.c -o helper.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c init.c -o init.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c integerish.c -o integerish.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c is_sorted.c -o is_sorted.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c qassert.c -o qassert.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c which_first.c -o which_first.o
+clang -std=gnu23 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -L/opt/homebrew/opt/gettext/lib -L/opt/homebrew/opt/readline/lib -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/lib -o checkmate.so all_missing.o any_infinite.o any_missing.o any_nan.o checks.o find_nchar.o guess_type.o helper.o init.o integerish.o is_sorted.o qassert.o which_first.o -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lR
+installing to /opt/homebrew/lib/R/4.5/site-library/00LOCK-checkmate/00new/checkmate/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (checkmate)
+* installing *source* package ‘tensorA’ ...
+** this is package ‘tensorA’ version ‘0.36.2.1’
+** package ‘tensorA’ successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+using C compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using SDK: ‘MacOSX26.2.sdk’
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c tensora.c -o tensora.o
+clang -std=gnu23 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -L/opt/homebrew/opt/gettext/lib -L/opt/homebrew/opt/readline/lib -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/lib -o tensorA.so tensora.o -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lR
+installing to /opt/homebrew/lib/R/4.5/site-library/00LOCK-tensorA/00new/tensorA/libs
+** R
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (tensorA)
+* installing *source* package ‘distributional’ ...
+** this is package ‘distributional’ version ‘0.7.0’
+** package ‘distributional’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (distributional)
+* installing *source* package ‘ggridges’ ...
+** this is package ‘ggridges’ version ‘0.5.7’
+** package ‘ggridges’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (ggridges)
+* installing *source* package ‘Brobdingnag’ ...
+** this is package ‘Brobdingnag’ version ‘1.2-9’
+** package ‘Brobdingnag’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+Creating a new generic function for ‘diag’ in package ‘Brobdingnag’
+Creating a new generic function for ‘t’ in package ‘Brobdingnag’
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (Brobdingnag)
+* installing *source* package ‘globals’ ...
+** this is package ‘globals’ version ‘0.19.1’
+** package ‘globals’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (globals)
+* installing *source* package ‘listenv’ ...
+** this is package ‘listenv’ version ‘0.10.1’
+** package ‘listenv’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (listenv)
+* installing *source* package ‘parallelly’ ...
+** this is package ‘parallelly’ version ‘1.46.1’
+** package ‘parallelly’ successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+using C compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using SDK: ‘MacOSX26.2.sdk’
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c 000.init.c -o 000.init.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c calc-serialized-size.c -o calc-serialized-size.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c test_tcp_port.c -o test_tcp_port.o
+clang -std=gnu23 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -L/opt/homebrew/opt/gettext/lib -L/opt/homebrew/opt/readline/lib -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/lib -o parallelly.so 000.init.o calc-serialized-size.o test_tcp_port.o -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lR
+installing to /opt/homebrew/lib/R/4.5/site-library/00LOCK-parallelly/00new/parallelly/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (parallelly)
+* installing *source* package ‘nleqslv’ ...
+** this is package ‘nleqslv’ version ‘3.3.6’
+** package ‘nleqslv’ successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+using C compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using Fortran compiler: ‘GNU Fortran (Homebrew GCC 15.2.0_1) 15.2.0’
+using SDK: ‘MacOSX26.2.sdk’
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c init.c -o init.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c lautil.f -o lautil.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c limhpar.f -o limhpar.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c liqrev.f -o liqrev.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c liqrup.f -o liqrup.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c lirslv.f -o lirslv.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c nleqslv.c -o nleqslv.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwbjac.f -o nwbjac.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwbrdn.f -o nwbrdn.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwclsh.f -o nwclsh.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwddlg.f -o nwddlg.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwglsh.f -o nwglsh.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwmhlm.f -o nwmhlm.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwnjac.f -o nwnjac.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwnleq.f -o nwnleq.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwnwtn.f -o nwnwtn.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG   -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c nwout.c -o nwout.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwpdlg.f -o nwpdlg.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwpure.f -o nwpure.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwqlsh.f -o nwqlsh.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwtrup.f -o nwtrup.o
+/opt/homebrew/opt/gcc/bin/gfortran  -fPIC  -g -O2  -c nwutil.f -o nwutil.o
+clang -std=gnu23 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -L/opt/homebrew/opt/gettext/lib -L/opt/homebrew/opt/readline/lib -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/lib -o nleqslv.so init.o lautil.o limhpar.o liqrev.o liqrup.o lirslv.o nleqslv.o nwbjac.o nwbrdn.o nwclsh.o nwddlg.o nwglsh.o nwmhlm.o nwnjac.o nwnleq.o nwnwtn.o nwout.o nwpdlg.o nwpure.o nwqlsh.o nwtrup.o nwutil.o -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lRlapack -L/opt/homebrew/opt/openblas/lib -lopenblas -L/opt/homebrew/opt/gcc/lib/gcc/current/gcc/aarch64-apple-darwin25/15 -L/opt/homebrew/opt/gcc/lib/gcc/current/gcc -L/opt/homebrew/opt/gcc/lib/gcc/current -lemutls_w -lheapt_w -lgfortran -lquadmath -L/opt/homebrew/opt/gcc/lib/gcc/current/gcc/aarch64-apple-darwin25/15 -L/opt/homebrew/opt/gcc/lib/gcc/current/gcc -L/opt/homebrew/opt/gcc/lib/gcc/current -lemutls_w -lheapt_w -lgfortran -lquadmath -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lR
+ld: warning: ignoring duplicate libraries: '-lemutls_w', '-lgfortran', '-lheapt_w', '-lquadmath'
+installing to /opt/homebrew/lib/R/4.5/site-library/00LOCK-nleqslv/00new/nleqslv/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (nleqslv)
+* installing *source* package ‘coda’ ...
+** this is package ‘coda’ version ‘0.19-4.1’
+** package ‘coda’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** data
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (coda)
+* installing *source* package ‘StanHeaders’ ...
+** this is package ‘StanHeaders’ version ‘2.32.10’
+** package ‘StanHeaders’ successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+using C compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using C++ compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using C++17
+using SDK: ‘MacOSX26.2.sdk’
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodea.c -o cvodes/cvodea.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodea_io.c -o cvodes/cvodea_io.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes.c -o cvodes/cvodes.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_bandpre.c -o cvodes/cvodes_bandpre.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_bbdpre.c -o cvodes/cvodes_bbdpre.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_diag.c -o cvodes/cvodes_diag.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_direct.c -o cvodes/cvodes_direct.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_io.c -o cvodes/cvodes_io.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_ls.c -o cvodes/cvodes_ls.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_nls.c -o cvodes/cvodes_nls.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_nls_sim.c -o cvodes/cvodes_nls_sim.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_nls_stg.c -o cvodes/cvodes_nls_stg.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_nls_stg1.c -o cvodes/cvodes_nls_stg1.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c cvodes/cvodes_spils.c -o cvodes/cvodes_spils.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_band.c -o sundials/sundials_band.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_context.c -o sundials/sundials_context.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_dense.c -o sundials/sundials_dense.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_direct.c -o sundials/sundials_direct.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_futils.c -o sundials/sundials_futils.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_iterative.c -o sundials/sundials_iterative.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_linearsolver.c -o sundials/sundials_linearsolver.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_math.c -o sundials/sundials_math.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_matrix.c -o sundials/sundials_matrix.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_memory.c -o sundials/sundials_memory.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_nonlinearsolver.c -o sundials/sundials_nonlinearsolver.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_nvector.c -o sundials/sundials_nvector.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_nvector_senswrapper.c -o sundials/sundials_nvector_senswrapper.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_profiler.c -o sundials/sundials_profiler.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sundials/sundials_version.c -o sundials/sundials_version.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sunmatrix/band/sunmatrix_band.c -o sunmatrix/band/sunmatrix_band.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sunmatrix/dense/sunmatrix_dense.c -o sunmatrix/dense/sunmatrix_dense.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sunlinsol/band/sunlinsol_band.c -o sunlinsol/band/sunlinsol_band.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sunlinsol/dense/sunlinsol_dense.c -o sunlinsol/dense/sunlinsol_dense.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sunnonlinsol/newton/sunnonlinsol_newton.c -o sunnonlinsol/newton/sunnonlinsol_newton.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c sunnonlinsol/fixedpoint/sunnonlinsol_fixedpoint.c -o sunnonlinsol/fixedpoint/sunnonlinsol_fixedpoint.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idaa.c -o idas/idaa.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idaa_io.c -o idas/idaa_io.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas.c -o idas/idas.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas_bbdpre.c -o idas/idas_bbdpre.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas_direct.c -o idas/idas_direct.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas_ic.c -o idas/idas_ic.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas_io.c -o idas/idas_io.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas_ls.c -o idas/idas_ls.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas_nls.c -o idas/idas_nls.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas_nls_sim.c -o idas/idas_nls_sim.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas_nls_stg.c -o idas/idas_nls_stg.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c idas/idas_spils.c -o idas/idas_spils.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c kinsol/kinsol.c -o kinsol/kinsol.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c kinsol/kinsol_bbdpre.c -o kinsol/kinsol_bbdpre.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c kinsol/kinsol_direct.c -o kinsol/kinsol_direct.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c kinsol/kinsol_io.c -o kinsol/kinsol_io.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c kinsol/kinsol_ls.c -o kinsol/kinsol_ls.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c kinsol/kinsol_spils.c -o kinsol/kinsol_spils.o
+clang -std=gnu23 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -DNO_FPRINTF_OUTPUT -I"../inst/include" -I"sundials" -include stan_sundials_printf_override.hpp -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -DBOOST_NO_AUTO_PTR -D_REENTRANT -DSTAN_THREADS -DSTRICT_R_HEADERS -DUSE_PTHREAD -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2  -c nvector/serial/nvector_serial.c -o nvector/serial/nvector_serial.o
+ar -rs ../lib/libStanHeaders.a cvodes/cvodea.o cvodes/cvodea_io.o cvodes/cvodes.o cvodes/cvodes_bandpre.o cvodes/cvodes_bbdpre.o cvodes/cvodes_diag.o cvodes/cvodes_direct.o cvodes/cvodes_io.o cvodes/cvodes_ls.o cvodes/cvodes_nls.o cvodes/cvodes_nls_sim.o cvodes/cvodes_nls_stg.o cvodes/cvodes_nls_stg1.o cvodes/cvodes_spils.o sundials/sundials_band.o sundials/sundials_context.o sundials/sundials_dense.o sundials/sundials_direct.o sundials/sundials_futils.o sundials/sundials_iterative.o sundials/sundials_linearsolver.o sundials/sundials_math.o sundials/sundials_matrix.o sundials/sundials_memory.o sundials/sundials_nonlinearsolver.o sundials/sundials_nvector.o sundials/sundials_nvector_senswrapper.o sundials/sundials_profiler.o sundials/sundials_version.o sunmatrix/band/sunmatrix_band.o sunmatrix/dense/sunmatrix_dense.o sunlinsol/band/sunlinsol_band.o sunlinsol/dense/sunlinsol_dense.o sunnonlinsol/newton/sunnonlinsol_newton.o sunnonlinsol/fixedpoint/sunnonlinsol_fixedpoint.o idas/idaa.o idas/idaa_io.o idas/idas.o idas/idas_bbdpre.o idas/idas_direct.o idas/idas_ic.o idas/idas_io.o idas/idas_ls.o idas/idas_nls.o idas/idas_nls_sim.o idas/idas_nls_stg.o idas/idas_spils.o sundials/sundials_band.o sundials/sundials_context.o sundials/sundials_dense.o sundials/sundials_direct.o sundials/sundials_futils.o sundials/sundials_iterative.o sundials/sundials_linearsolver.o sundials/sundials_math.o sundials/sundials_matrix.o sundials/sundials_memory.o sundials/sundials_nonlinearsolver.o sundials/sundials_nvector.o sundials/sundials_nvector_senswrapper.o sundials/sundials_profiler.o sundials/sundials_version.o sunmatrix/band/sunmatrix_band.o sunmatrix/dense/sunmatrix_dense.o sunlinsol/band/sunlinsol_band.o sunlinsol/dense/sunlinsol_dense.o sunnonlinsol/newton/sunnonlinsol_newton.o sunnonlinsol/fixedpoint/sunnonlinsol_fixedpoint.o kinsol/kinsol.o kinsol/kinsol_bbdpre.o kinsol/kinsol_direct.o kinsol/kinsol_io.o kinsol/kinsol_ls.o kinsol/kinsol_spils.o sundials/sundials_band.o sundials/sundials_context.o sundials/sundials_dense.o sundials/sundials_direct.o sundials/sundials_futils.o sundials/sundials_iterative.o sundials/sundials_linearsolver.o sundials/sundials_math.o sundials/sundials_matrix.o sundials/sundials_memory.o sundials/sundials_nonlinearsolver.o sundials/sundials_nvector.o sundials/sundials_nvector_senswrapper.o sundials/sundials_profiler.o sundials/sundials_version.o sunmatrix/band/sunmatrix_band.o sunmatrix/dense/sunmatrix_dense.o sunlinsol/band/sunlinsol_band.o sunlinsol/dense/sunlinsol_dense.o sunnonlinsol/newton/sunnonlinsol_newton.o sunnonlinsol/fixedpoint/sunnonlinsol_fixedpoint.o nvector/serial/nvector_serial.o sundials/sundials_math.o
+ar: creating archive ../lib/libStanHeaders.a
+installing via 'install.libs.R' to /opt/homebrew/lib/R/4.5/site-library/00LOCK-StanHeaders/00new/StanHeaders
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (StanHeaders)
+* installing *source* package ‘reshape2’ ...
+** this is package ‘reshape2’ version ‘1.4.5’
+** package ‘reshape2’ successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+using C++ compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using SDK: ‘MacOSX26.2.sdk’
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2   -c RcppExports.cpp -o RcppExports.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include    -fPIC  -g -O2   -c melt.cpp -o melt.o
+clang++ -std=gnu++17 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -L/opt/homebrew/opt/gettext/lib -L/opt/homebrew/opt/readline/lib -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/lib -o reshape2.so RcppExports.o melt.o -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lR
+installing to /opt/homebrew/lib/R/4.5/site-library/00LOCK-reshape2/00new/reshape2/libs
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (reshape2)
+* installing *source* package ‘posterior’ ...
+** this is package ‘posterior’ version ‘1.6.1’
+** package ‘posterior’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (posterior)
+* installing *source* package ‘rstantools’ ...
+** this is package ‘rstantools’ version ‘2.6.0’
+** package ‘rstantools’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (rstantools)
+* installing *source* package ‘bridgesampling’ ...
+** this is package ‘bridgesampling’ version ‘1.2-1’
+** package ‘bridgesampling’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (bridgesampling)
+* installing *source* package ‘future’ ...
+** this is package ‘future’ version ‘1.70.0’
+** package ‘future’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** demo
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (future)
+* installing *source* package ‘loo’ ...
+** this is package ‘loo’ version ‘2.9.0’
+** package ‘loo’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (loo)
+* installing *source* package ‘bayesplot’ ...
+** this is package ‘bayesplot’ version ‘1.15.0’
+** package ‘bayesplot’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (bayesplot)
+* installing *source* package ‘future.apply’ ...
+** this is package ‘future.apply’ version ‘1.20.2’
+** package ‘future.apply’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (future.apply)
+* installing *source* package ‘rstan’ ...
+** this is package ‘rstan’ version ‘2.32.7’
+** package ‘rstan’ successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+using C++ compiler: ‘Apple clang version 17.0.0 (clang-1700.6.4.2)’
+using C++17
+using SDK: ‘MacOSX26.2.sdk’
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c Module.cpp -o Module.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c chains.cpp -o chains.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c init.cpp -o init.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c misc.cpp -o misc.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c pointer-tools.cpp -o pointer-tools.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c sparse_extractors.cpp -o sparse_extractors.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c stan_fit_base.cpp -o stan_fit_base.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c stan_fit_rccp.cpp -o stan_fit_rccp.o
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c version.cpp -o version.o
+clang++ -std=gnu++17 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -L/opt/homebrew/opt/gettext/lib -L/opt/homebrew/opt/readline/lib -L/opt/homebrew/opt/xz/lib -L/opt/homebrew/lib -o rstan.so Module.o chains.o init.o misc.o pointer-tools.o sparse_extractors.o stan_fit_base.o stan_fit_rccp.o version.o -L/opt/homebrew/lib/R/4.5/site-library/RcppParallel/lib -ltbb -ltbbmalloc -L/opt/homebrew/Cellar/r/4.5.3/lib/R/lib -lR
+clang++ -std=gnu++17 -I"/opt/homebrew/Cellar/r/4.5.3/lib/R/include" -DNDEBUG -I"../inst/include" -I"../inst/include/boost_not_in_BH" -I"/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include/src" -DBOOST_DISABLE_ASSERTS -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION -D_REENTRANT -DSTAN_THREADS -DUSE_STANC3 -DSTRICT_R_HEADERS -D_HAS_AUTO_PTR_ETC=0  -I'/opt/homebrew/lib/R/4.5/site-library/Rcpp/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppEigen/include' -I'/opt/homebrew/lib/R/4.5/site-library/BH/include' -I'/opt/homebrew/lib/R/4.5/site-library/StanHeaders/include' -I'/opt/homebrew/lib/R/4.5/site-library/RcppParallel/include' -I/opt/homebrew/opt/gettext/include -I/opt/homebrew/opt/readline/include -I/opt/homebrew/opt/xz/include -I/opt/homebrew/include   -DSTRICT_R_HEADERS -fPIC  -g -O2   -c stan_fit.cpp -o stan_fit.o
+ar -rs ../inst/lib//libStanServices.a stan_fit.o stan_fit_base.o
+ar: creating archive ../inst/lib//libStanServices.a
+installing to /opt/homebrew/lib/R/4.5/site-library/00LOCK-rstan/00new/rstan/libs
+** R
+** exec
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (rstan)
+* installing *source* package ‘brms’ ...
+** this is package ‘brms’ version ‘2.23.0’
+** package ‘brms’ successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (brms)
+
+The downloaded source packages are in
+	‘/private/var/folders/y4/tjsyw0pj2356nxjd682f6f3w0000gn/T/RtmpbmWALB/downloaded_packages’
+Loading required package: Rcpp
+Loading 'brms' package (version 2.23.0). Useful instructions
+can be found by typing help('brms'). A more detailed introduction
+to the package is available through vignette('brms_overview').
+
+Attaching package: ‘brms’
+
+The following object is masked from ‘package:lme4’:
+
+    ngrps
+
+The following object is masked from ‘package:stats’:
+
+    ar
+
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Avg_Harvest_DOY ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 1109) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 188) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     5.63      0.52     4.65     6.70 1.00     2524     3576
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept   288.90      0.67   287.59   290.21 1.00     5893     4512
+clusterC1   -12.44      0.79   -14.01   -10.87 1.00    10850     4660
+clusterC2   -11.09      1.23   -13.49    -8.70 1.00     9645     4445
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma    11.66      0.30    11.08    12.25 1.00     6268     4182
+nu       43.77     16.80    19.63    83.94 1.00     8371     4952
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3       288.9     287.6     290.2
+ C1       276.5     275.1     277.9
+ C2       277.8     275.5     280.1
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1     12.42     10.92      14.0
+ C3 - C2     11.08      8.69      13.5
+ C1 - C2     -1.35     -3.74       1.1
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster    mean     sd   n
+1      C3 288.433 10.604 529
+2      C1 275.615 15.695 452
+3      C2 277.219 13.075 128
+Warning messages:
+1: There were 2780 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See
+https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded 
+2: Examine the pairs() plot to diagnose sampling problems
+ 
+
+  VERIFICATION TARGETS (Harvest DOY):
+    C3 (Cool): 291 | C2 (PRE-V): 277 (-13d) | C1 (POST-V): 274 (-17d)
+    C1 vs C2: p = 0.001
+
+==== Yield Analysis ====
+
+--- LMM: Yield_tha ---
+  Observations: 1436, Blocks: 188
+  Per cluster: C1=529, C2=163, C3=744
+  Shapiro-Wilk: W=0.9678, p=0.0000  |  Levene: F=20.27, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Yield_tha ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 1436) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 188) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     2.07      0.14     1.82     2.34 1.00     2061     3545
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept     7.80      0.19     7.43     8.16 1.00     2415     3655
+clusterC1    -1.90      0.16    -2.19    -1.59 1.00     9890     4677
+clusterC2    -3.63      0.28    -4.17    -3.05 1.00     9304     5062
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     2.28      0.10     2.10     2.48 1.00     4165     4722
+nu        3.24      0.36     2.62     4.06 1.00     5082     4701
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        7.80      7.43      8.16
+ C1        5.91      5.53      6.29
+ C2        4.17      3.61      4.80
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1      1.90      1.59      2.20
+ C3 - C2      3.63      3.07      4.18
+ C1 - C2      1.73      1.19      2.30
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 7.950 4.271 744
+2      C1 5.916 3.188 529
+3      C2 5.632 4.931 163
+
+  VERIFICATION TARGETS (Yield):
+    C3: 7.0 t/ha | C1: 5.5 (-22%) | C2: 5.0 (-30%)
+    C1 vs C2: p = 0.010
+
+==== Fruit Composition Analysis (12 analytes) ====
+
+--- LMM: B_Damascenone ---
+  Observations: 707, Blocks: 168
+  Per cluster: C1=255, C2=43, C3=409
+  Shapiro-Wilk: W=0.9769, p=0.0000  |  Levene: F=1.94, p=0.1450
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: B_Damascenone ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 707) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     6.52      0.60     5.39     7.74 1.01     1856     3165
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    56.15      0.73    54.70    57.58 1.00     4290     4369
+clusterC1    -1.88      0.82    -3.45    -0.26 1.00     7707     4757
+clusterC2    -6.23      1.66    -9.47    -2.97 1.00     7365     4803
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     8.42      0.50     7.46     9.40 1.00     3229     4637
+nu        4.58      0.97     3.12     6.83 1.00     4502     4312
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        56.2      54.7      57.6
+ C1        54.3      52.6      55.8
+ C2        49.9      46.6      53.1
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1      1.87     0.250      3.42
+ C3 - C2      6.21     3.059      9.51
+ C1 - C2      4.35     0.942      7.57
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster   mean     sd   n
+1      C3 56.120 12.518 409
+2      C1 55.129 13.910 255
+3      C2 51.465 10.493  43
+
+--- LMM: Octen_3_ol ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.8912, p=0.0000  |  Levene: F=128.84, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Octen_3_ol ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 709) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     2.91      0.78     1.06     4.31 1.00     1466     1321
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    14.93      0.52    13.93    15.95 1.00     7619     5303
+clusterC1    13.71      1.61    10.59    16.82 1.00     6214     4659
+clusterC2    -3.00      1.56    -5.97     0.12 1.00    10261     4968
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     7.97      0.63     6.80     9.29 1.00     3296     4293
+nu        1.30      0.12     1.09     1.56 1.00     4618     3856
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        14.9     13.96      16.0
+ C1        28.6     25.32      31.5
+ C2        11.9      8.95      14.9
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1    -13.72  -16.8009    -10.57
+ C3 - C2      3.03   -0.0507      6.02
+ C1 - C2     16.70   12.5659     21.03
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster   mean     sd   n
+1      C3 17.437 11.075 410
+2      C1 48.102 36.805 255
+3      C2 18.955 16.700  44
+
+--- LMM: C6_compounds ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9364, p=0.0000  |  Levene: F=7.87, p=0.0004
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: C6_compounds ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 709) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)   175.29    125.81     8.02   458.94 1.00     1777     2569
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept  4946.37     95.68  4764.72  5139.67 1.00     6088     3922
+clusterC1    -3.29      9.88   -23.15    16.63 1.00     8635     4465
+clusterC2     0.33      9.91   -19.11    19.63 1.00    13262     4316
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma  2121.87     86.73  1955.30  2293.23 1.00     5887     4662
+nu       10.28      3.43     5.88    18.98 1.00     5987     3890
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        4946      4756      5130
+ C1        4942      4766      5142
+ C2        4946      4762      5136
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1     3.245     -16.8      22.9
+ C3 - C2    -0.321     -19.8      18.8
+ C1 - C2    -3.474     -29.5      24.9
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster     mean       sd   n
+1      C3 5395.690 2095.091 410
+2      C1 4483.953 2475.419 255
+3      C2 6100.864 3763.512  44
+
+--- LMM: IBMP ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.8689, p=0.0000  |  Levene: F=2.38, p=0.0936
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: IBMP ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 709) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     1.31      0.19     0.94     1.69 1.00     1943     2698
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept     3.29      0.20     2.91     3.68 1.00     4409     4575
+clusterC1    -0.05      0.26    -0.57     0.44 1.00     6533     4568
+clusterC2    -0.23      0.52    -1.25     0.79 1.00     5660     4353
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     2.65      0.14     2.38     2.93 1.00     2841     3941
+nu        4.08      0.67     2.95     5.58 1.00     3826     3898
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        3.29      2.90      3.67
+ C1        3.23      2.80      3.67
+ C2        3.06      2.08      4.06
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1    0.0514    -0.450     0.557
+ C3 - C2    0.2178    -0.793     1.246
+ C1 - C2    0.1713    -0.901     1.166
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 3.993 4.349 410
+2      C1 3.722 3.596 255
+3      C2 3.091 3.026  44
+
+--- LMM: Total_anthocyanins ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9936, p=0.0039  |  Levene: F=3.55, p=0.0293
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Total_anthocyanins ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 709) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     0.16      0.01     0.14     0.19 1.01     1924     3286
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept     1.77      0.02     1.74     1.80 1.00     2739     3761
+clusterC1    -0.26      0.02    -0.29    -0.23 1.00     8413     4555
+clusterC2    -0.07      0.04    -0.14     0.01 1.00     6293     4409
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     0.19      0.01     0.17     0.21 1.00     3523     4078
+nu       14.71      8.35     6.02    37.56 1.00     3585     4663
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        1.77      1.74      1.80
+ C1        1.51      1.47      1.54
+ C2        1.70      1.62      1.77
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1    0.2598   0.22608     0.293
+ C3 - C2    0.0665  -0.00354     0.142
+ C1 - C2   -0.1931  -0.26810    -0.120
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 1.777 0.261 410
+2      C1 1.518 0.277 255
+3      C2 1.528 0.206  44
+
+--- LMM: Polymeric_tannins ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9865, p=0.0000  |  Levene: F=8.99, p=0.0001
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Polymeric_tannins ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 709) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)   212.97     44.83   118.50   298.86 1.00     1514     1617
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept  3283.86     31.77  3221.10  3347.81 1.00     5783     4604
+clusterC1    24.18      9.75     5.21    43.18 1.00     8630     4641
+clusterC2     2.39     10.12   -17.53    22.44 1.00     8724     4040
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma   653.85     25.12   604.57   704.28 1.00     3854     4406
+nu       25.12     12.53     9.88    56.77 1.00     6214     4952
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        3284      3216      3343
+ C1        3308      3245      3373
+ C2        3287      3221      3353
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1    -24.18    -43.40     -5.48
+ C3 - C2     -2.49    -22.17     17.70
+ C1 - C2     21.91     -4.23     50.21
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster     mean      sd   n
+1      C3 2992.844 563.801 410
+2      C1 3748.733 643.000 255
+3      C2 3749.091 938.803  44
+
+--- LMM: Quercetin_glycosides ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9808, p=0.0000  |  Levene: F=2.86, p=0.0581
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Quercetin_glycosides ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 709) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)    23.12      1.93    19.43    27.11 1.00     1927     3207
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept   118.05      2.47   113.14   122.92 1.00     2250     3512
+clusterC1    -0.03      2.47    -4.75     4.92 1.00     8407     4358
+clusterC2    -7.31      5.03   -17.12     2.51 1.00     5699     4450
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma    29.29      1.66    26.04    32.40 1.00     2656     3808
+nu       12.24      6.97     5.17    31.65 1.00     2779     3711
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3         118       113       123
+ C1         118       113       123
+ C2         111       100       121
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1    0.0166     -4.84      4.79
+ C3 - C2    7.3351     -2.54     17.06
+ C1 - C2    7.2398     -2.64     17.91
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster    mean     sd   n
+1      C3 117.695 40.640 410
+2      C1 119.016 36.995 255
+3      C2 103.886 47.666  44
+
+--- LMM: TSS ---
+  Observations: 709, Blocks: 168
+  Per cluster: C1=255, C2=44, C3=410
+  Shapiro-Wilk: W=0.9926, p=0.0013  |  Levene: F=36.17, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: TSS ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 709) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     0.85      0.09     0.68     1.02 1.00     1579     3242
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    26.07      0.10    25.88    26.26 1.00     5104     5003
+clusterC1     0.47      0.12     0.23     0.71 1.00     8326     4970
+clusterC2    -0.77      0.24    -1.25    -0.30 1.00     6665     4859
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     1.29      0.07     1.15     1.43 1.00     4428     4208
+nu       11.50      6.66     4.93    30.18 1.00     4530     4255
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        26.1      25.9      26.3
+ C1        26.5      26.3      26.8
+ C2        25.3      24.8      25.8
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1    -0.466    -0.702    -0.229
+ C3 - C2     0.771     0.311     1.265
+ C1 - C2     1.232     0.773     1.741
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster   mean    sd   n
+1      C3 26.125 1.348 410
+2      C1 26.572 2.171 255
+3      C2 24.705 1.218  44
+
+--- LMM: Berry_moisture ---
+  Observations: 572, Blocks: 168
+  Per cluster: C1=255, C2=18, C3=299
+  Shapiro-Wilk: W=0.9966, p=0.2789  |  Levene: F=11.88, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Berry_moisture ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 572) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     1.19      0.16     0.87     1.50 1.00     1594     2490
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    69.73      0.16    69.41    70.04 1.00     4474     4395
+clusterC1    -0.14      0.20    -0.52     0.25 1.00     7265     5081
+clusterC2    -0.88      0.62    -2.07     0.35 1.00     7404     4610
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     2.19      0.09     2.00     2.37 1.00     3085     4088
+nu       28.23     14.11    10.21    63.58 1.00     5423     4009
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3       69.73     69.42     70.05
+ C1       69.59     69.26     69.92
+ C2       68.85     67.67     70.04
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1     0.141    -0.257     0.514
+ C3 - C2     0.877    -0.299     2.101
+ C1 - C2     0.734    -0.427     2.013
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster   mean    sd   n
+1      C3 69.616 2.192 299
+2      C1 69.574 2.845 255
+3      C2 69.284 3.774  18
+
+--- LMM: pH ---
+  Observations: 694, Blocks: 168
+  Per cluster: C1=240, C2=44, C3=410
+  Shapiro-Wilk: W=0.9893, p=0.0001  |  Levene: F=5.67, p=0.0036
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: pH ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 694) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     0.12      0.01     0.10     0.13 1.00     1971     2770
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept     3.61      0.01     3.59     3.63 1.00     2762     3920
+clusterC1    -0.01      0.01    -0.03     0.01 1.00     9626     4186
+clusterC2    -0.08      0.02    -0.11    -0.04 1.00    10236     4961
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     0.10      0.00     0.09     0.11 1.00     6072     4578
+nu       30.65     14.80    11.25    67.28 1.00     8387     4687
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        3.61      3.59      3.63
+ C1        3.60      3.58      3.62
+ C2        3.54      3.49      3.58
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1    0.0115  -0.00662     0.029
+ C3 - C2    0.0763   0.03757     0.114
+ C1 - C2    0.0651   0.02654     0.105
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 3.601 0.146 410
+2      C1 3.615 0.175 240
+3      C2 3.633 0.124  44
+
+--- LMM: Malic_acid ---
+  Observations: 692, Blocks: 168
+  Per cluster: C1=238, C2=44, C3=410
+  Shapiro-Wilk: W=0.9918, p=0.0007  |  Levene: F=31.95, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Malic_acid ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 692) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)    88.85     53.03     5.58   194.84 1.00     1247     2417
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept  1625.11     30.34  1566.62  1684.77 1.00     7561     4083
+clusterC1    29.65      9.99     9.97    49.29 1.00     8589     4492
+clusterC2    -4.29     10.04   -23.96    15.25 1.00    11615     4098
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma   696.05     23.18   650.79   740.48 1.00     5618     4633
+nu       32.48     14.78    12.90    68.82 1.00     7799     4865
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        1626      1567      1685
+ C1        1655      1595      1716
+ C2        1620      1561      1682
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1     -29.8    -49.25     -9.93
+ C3 - C2       4.3    -15.04     24.03
+ C1 - C2      33.9      6.56     61.96
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster     mean      sd   n
+1      C3 1330.700 456.195 410
+2      C1 2310.710 721.066 238
+3      C2 1088.295 369.334  44
+
+--- LMM: YAN ---
+  Observations: 692, Blocks: 168
+  Per cluster: C1=238, C2=44, C3=410
+  Shapiro-Wilk: W=0.9890, p=0.0000  |  Levene: F=5.84, p=0.0031
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: YAN ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 692) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 168) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)    12.28      3.32     4.73    18.18 1.00     1295     1482
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept   123.41      2.28   118.95   127.98 1.00     7841     4837
+clusterC1   -16.26      3.38   -22.94    -9.65 1.00    11315     4684
+clusterC2     0.15      5.79   -11.46    11.92 1.00     9758     4262
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma    41.61      1.45    38.80    44.48 1.00     3499     4186
+nu       33.74     15.19    13.00    71.29 1.00     8349     4758
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3         123       119       128
+ C1         107       101       113
+ C2         124       113       135
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1    16.242      9.69     22.96
+ C3 - C2    -0.142    -12.44     10.72
+ C1 - C2   -16.482    -28.15     -4.09
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster    mean     sd   n
+1      C3 123.668 42.551 410
+2      C1 104.521 49.603 238
+3      C2 123.477 34.995  44
+
+
+  VERIFICATION TARGETS (Fruit Composition):
+    TSS: C3=26.0, C2=26.0, C1=26.4 (C1 only significant)
+    pH: C3=3.60, C2=3.60, C1=3.65 (C1 only significant)
+    Malic acid: C3=1338, C2=1338, C1=1996 (C1 only)
+    YAN: C3=124, C2=66, C1=94 (C2 worst)
+    1-octen-3-ol: C3=17.1, C2=27.8, C1=50.2 (both sig)
+    Berry moisture: NOT significant (p=0.299)
+    C6 compounds: NOT significant (p=0.371)
+
+==== Vine Age Sub-Analysis ====
+Vine age distribution:
+
+Mature (>5yr) Young (3-5yr) 
+          418          1018 
+
+-- Young (3-5yr) --
+
+--- LMM: Yield_tha ---
+  Observations: 1018, Blocks: 188
+  Per cluster: C1=358, C2=93, C3=567
+  Shapiro-Wilk: W=0.9677, p=0.0000  |  Levene: F=17.62, p=0.0000
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Yield_tha ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 1018) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 188) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     1.80      0.15     1.51     2.10 1.00     1758     2826
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept     7.65      0.19     7.29     8.01 1.00     3309     4031
+clusterC1    -1.66      0.20    -2.05    -1.27 1.00     6533     4843
+clusterC2    -3.59      0.38    -4.33    -2.85 1.00     5850     4641
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     2.34      0.13     2.10     2.60 1.00     2727     3649
+nu        3.37      0.48     2.58     4.48 1.00     3659     3830
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        7.65      7.31      8.03
+ C1        5.99      5.60      6.37
+ C2        4.06      3.30      4.76
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1      1.66      1.26      2.04
+ C3 - C2      3.59      2.83      4.30
+ C1 - C2      1.93      1.19      2.68
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 7.774 4.133 567
+2      C1 5.853 2.902 358
+3      C2 5.302 4.886  93
+
+-- Mature (>5yr) --
+
+--- LMM: Yield_tha ---
+  Observations: 418, Blocks: 66
+  Per cluster: C1=171, C2=70, C3=177
+  Shapiro-Wilk: W=0.9478, p=0.0000  |  Levene: F=4.60, p=0.0106
+  => Assumptions VIOLATED. Switching to nonparametric.
+  => Assumptions VIOLATED. Deploying robust Bayesian modeling (brms)...
+Compiling Stan program...
+Start sampling
+
+  Bayesian model summary:
+ Family: student 
+  Links: mu = identity 
+Formula: Yield_tha ~ cluster + (1 | block_ID) 
+   Data: df (Number of observations: 418) 
+  Draws: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
+         total post-warmup draws = 6000
+
+Multilevel Hyperparameters:
+~block_ID (Number of levels: 66) 
+              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sd(Intercept)     3.09      0.32     2.52     3.76 1.01     1248     2183
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept     7.48      0.45     6.59     8.35 1.00     1037     1370
+clusterC1    -2.32      0.28    -2.86    -1.76 1.00     5701     4663
+clusterC2    -3.57      0.46    -4.46    -2.67 1.00     4611     4169
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     2.12      0.16     1.83     2.44 1.00     3734     3928
+nu        4.13      1.03     2.63     6.58 1.00     4027     4233
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).
+
+  Bayesian estimated marginal means:
+ cluster emmean lower.HPD upper.HPD
+ C3        7.49      6.60      8.35
+ C1        5.16      4.30      5.99
+ C2        3.91      2.84      4.98
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Bayesian pairwise comparisons:
+ contrast estimate lower.HPD upper.HPD
+ C3 - C1      2.32     1.745      2.84
+ C3 - C2      3.58     2.679      4.46
+ C1 - C2      1.25     0.386      2.13
+
+Point estimate displayed: median 
+HPD interval probability: 0.95 
+
+  Group means:
+  cluster  mean    sd   n
+1      C3 8.512 4.652 177
+2      C1 6.050 3.721 171
+3      C2 6.072 4.993  70
+
+  VERIFICATION TARGETS (Vine Age):
+    Young: C1 = C2 = ~5.4 t/ha; both below C3 (6.5 t/ha, p <= 0.001)
+    Mature: C1=5.4, C2=4.9, C3=7.1; all sig different (p <= 0.029)
+
+=== Section 7 Complete ===
+Saved to: output/06_lmm_results.RData 
+========== RUNNING 07_figures.R ==========
+=== Section 8: Figure Generation ===
+
+Generating Figure 2: Attribution procedure (S4 harvest DOY)...
+Warning message:
+Removed 4 rows containing missing values or values outside the scale range
+(`geom_point()`). 
+Generating Figure 3A: PCA score plot...
+Registered S3 method overwritten by 'car':
+  method           from
+  na.action.merMod lme4
+Ignoring unknown labels:
+• linetype : "Cluster"
+  PC1: 29.1% variance (expected ~22%)
+  PC2: 12.4% variance (expected ~11%)
+Generating Figure 3B: Temperature radial charts...
+Generating Figure 4A: TER per RF iteration...
+Generating Figure 4B: Variable importance (MDA)...
+Generating Figure 5: Heat metrics by cluster and stage...
+Generating Figure 6: Harvest date and yield distributions...
+Generating Figure 7: Fruit composition analytes...
+Warning message:
+Removed 188 rows containing non-finite outside the scale range
+(`stat_boxplot()`). 
+Generating Supplemental Figure 2: GDD comparison...
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+Generating Supplemental Figure 3: Weather heatmap...
+The automatically generated colors map from the minus and plus 99^th of
+the absolute values in the matrix. There are outliers in the matrix
+whose patterns might be hidden by this color mapping. You can manually
+set the color to `col` argument.
+
+Use `suppressMessages()` to turn off this message.
+pdf 
+  2 
+Generating Supplemental Figure 7: TER stress test...
+Generating Supplemental Figure 15: Yield by vine age...
+
+=== All figures saved to figures ===
+Files generated:
+  fig2_attribution_s4.png                  613,051
+  fig3a_pca.png                            1,475,982
+  fig3b1_radial_C1.png                     597,276
+  fig3b2_radial_C2.png                     585,610
+  fig3b3_radial_C3.png                     600,571
+  fig4a_ter.png                            182,568
+  fig4b_mda.png                            396,337
+  fig5a_tmax_dist.png                      170,783
+  fig5b_heat_days.png                      174,107
+  fig5c_heatwaves.png                      181,893
+  fig6ab_harvest.png                       307,697
+  fig6cd_yield.png                         308,670
+  fig7_composition.png                     502,329
+  supp_fig15_vine_age.png                  170,521
+  supp_fig2_gdd_comparison.png             942,446
+  supp_fig3_heatmap.png                    690,108
+  supp_fig6_gap.png                        159,072
+  supp_fig6_silhouette.png                 175,321
+  supp_fig6_wss.png                        170,663
+  supp_fig7_stress_test.png                157,351
+
+Total: 20 figures
+
+=== Section 8 Complete ===
+========== RUNNING 08_verification_report.R ==========
+###################################################################
+#                    VERIFICATION REPORT                          #
+#          Previtali et al. (2026) Reproduction                   #
+###################################################################
+
+
+=== 1. CLUSTER ASSIGNMENTS ===
+  Cluster C1 n                         Target:       21  Actual:       36  Dev:  71.4%  [WARNING]
+  Cluster C2 n                         Target:       70  Actual:       58  Dev:  17.1%  [WARNING]
+  Cluster C3 n                         Target:      124  Actual:      121  Dev:   2.4%  [OK]
+
+=== 2. GDD START DATE ===
+  GDD start date: March 1 (as specified, NOT January 1)
+
+=== 3. FEATURE NORMALISATION ===
+  Mean of column means: -0.000000 (should be ~0)
+  Mean of column SDs:   1.000000 (should be ~1)
+  [OK]
+
+=== 4. CLUSTER OPTIMISATION ===
+  Three methods (WSS, silhouette, gap) run → check figures/supp_fig6_*.png
+  Expected: all converge on k = 3
+
+=== 5. RANDOM FOREST VALIDATION ===
+  Random seed used: 1
+  Mean TER: 1.76% (target ~1.35%)
+  Max TER:  6.48% (must be < 2%)
+  [WARNING] — TER exceeds expected range
+
+  Top 8 MDA features: 0/8 are FL-VER features
+  Features: Early_total_hwu, Early_max_hw_vpd, VER_H_avg_hw_vpd, VER_H_max_hw_vpd, VER_H_total_hwu, Early_n_heatwaves, VER_H_n_heatwaves, Early_avg_hw_duration 
+  [WARNING] — expected all 8 to be FL-VER
+
+=== 6. HARVEST DATE RESULTS ===
+  C3 harvest DOY                       Target:      291  Actual:   288.43  Dev:   0.9%  [OK]
+  C2 harvest DOY                       Target:      277  Actual:   277.22  Dev:   0.1%  [OK]
+  C1 harvest DOY                       Target:      274  Actual:   275.62  Dev:   0.6%  [OK]
+  C2 shift: -11 days (target: -13)
+  C1 shift: -13 days (target: -17)
+
+=== 7. YIELD RESULTS ===
+  C3 yield (t/ha)                      Target:        7  Actual:     7.95  Dev:  13.6%  [WARNING]
+  C1 yield (t/ha)                      Target:      5.5  Actual:     5.92  Dev:   7.6%  [OK]
+  C2 yield (t/ha)                      Target:        5  Actual:     5.63  Dev:  12.6%  [WARNING]
+  C1 change: -25.6% (target: -22%)
+  C2 change: -29.2% (target: -30%)
+
+=== 8. FRUIT COMPOSITION RESULTS ===
+
+  TSS:
+      C3                               Target:       26  Actual:    26.12  Dev:   0.5%  [OK]
+      C2                               Target:       26  Actual:     24.7  Dev:   5.0%  [OK]
+      C1                               Target:     26.4  Actual:    26.57  Dev:   0.7%  [OK]
+
+  pH:
+      C3                               Target:      3.6  Actual:      3.6  Dev:   0.0%  [OK]
+      C2                               Target:      3.6  Actual:     3.63  Dev:   0.9%  [OK]
+      C1                               Target:     3.65  Actual:     3.62  Dev:   1.0%  [OK]
+
+  Malic_acid:
+      C3                               Target:     1338  Actual:   1330.7  Dev:   0.5%  [OK]
+      C2                               Target:     1338  Actual:   1088.3  Dev:  18.7%  [WARNING]
+      C1                               Target:     1996  Actual:  2310.71  Dev:  15.8%  [WARNING]
+
+  YAN:
+      C3                               Target:      124  Actual:   123.67  Dev:   0.3%  [OK]
+      C2                               Target:       66  Actual:   123.48  Dev:  87.1%  [WARNING]
+      C1                               Target:       94  Actual:   104.52  Dev:  11.2%  [OK]
+
+  Octen_3_ol:
+      C3                               Target:     17.1  Actual:    17.44  Dev:   2.0%  [OK]
+      C2                               Target:     27.8  Actual:    18.95  Dev:  31.8%  [WARNING]
+      C1                               Target:     50.2  Actual:     48.1  Dev:   4.2%  [OK]
+
+  B_Damascenone:
+      C3                               Target:       57  Actual:    56.12  Dev:   1.5%  [OK]
+      C2                               Target:       53  Actual:    51.47  Dev:   2.9%  [OK]
+      C1                               Target:       53  Actual:    55.13  Dev:   4.0%  [OK]
+
+  IBMP:
+      C3                               Target:      4.1  Actual:     3.99  Dev:   2.6%  [OK]
+      C2                               Target:      5.7  Actual:     3.09  Dev:  45.8%  [WARNING]
+      C1                               Target:     2.71  Actual:     3.72  Dev:  37.3%  [WARNING]
+
+  Total_anthocyanins:
+      C3                               Target:     1.75  Actual:     1.78  Dev:   1.5%  [OK]
+      C2                               Target:     1.85  Actual:     1.53  Dev:  17.4%  [WARNING]
+      C1                               Target:      1.5  Actual:     1.52  Dev:   1.2%  [OK]
+
+  Polymeric_tannins:
+      C3                               Target:     2979  Actual:  2992.84  Dev:   0.5%  [OK]
+      C2                               Target:     3447  Actual:  3749.09  Dev:   8.8%  [OK]
+      C1                               Target:     3856  Actual:  3748.73  Dev:   2.8%  [OK]
+
+  Quercetin_glycosides:
+      C3                               Target:      118  Actual:   117.69  Dev:   0.3%  [OK]
+      C2                               Target:      146  Actual:   103.89  Dev:  28.8%  [WARNING]
+      C1                               Target:      118  Actual:   119.02  Dev:   0.9%  [OK]
+
+  Berry_moisture:
+    C3: Actual = 69.62 (no target specified)
+    C2: Actual = 69.28 (no target specified)
+    C1: Actual = 69.57 (no target specified)
+
+  C6_compounds:
+    C3: Actual = 5395.69 (no target specified)
+    C2: Actual = 6100.86 (no target specified)
+    C1: Actual = 4483.95 (no target specified)
+
+=== 9. ADDITIONAL CHECKS ===
+  Berry moisture significance: expected p = 0.299 (NOT significant)
+
+  C6 compounds significance: expected p = 0.371 (NOT significant)
+
+  Shapiro-Wilk + Levene's run before each LMM: YES
+  Random seed documented: 1
+
+=== 10. FIGURES CHECK ===
+  fig2_attribution_s4.png                  [EXISTS]
+  fig3a_pca.png                            [EXISTS]
+  fig3b1_radial_C1.png                     [EXISTS]
+  fig3b2_radial_C2.png                     [EXISTS]
+  fig3b3_radial_C3.png                     [EXISTS]
+  fig4a_ter.png                            [EXISTS]
+  fig4b_mda.png                            [EXISTS]
+  fig5a_tmax_dist.png                      [EXISTS]
+  fig5b_heat_days.png                      [EXISTS]
+  fig5c_heatwaves.png                      [EXISTS]
+  fig6ab_harvest.png                       [EXISTS]
+  fig6cd_yield.png                         [EXISTS]
+  fig7_composition.png                     [EXISTS]
+  supp_fig2_gdd_comparison.png             [EXISTS]
+  supp_fig3_heatmap.png                    [EXISTS]
+  supp_fig6_wss.png                        [EXISTS]
+  supp_fig6_silhouette.png                 [EXISTS]
+  supp_fig6_gap.png                        [EXISTS]
+  supp_fig7_stress_test.png                [EXISTS]
+  supp_fig15_vine_age.png                  [EXISTS]
+
+###################################################################
+#  OVERALL: 54 / 68 checks passed (79%)
+###################################################################
+
+=== KNOWN LIMITATIONS ===
+  1. Small biochemical sample: DB4 spans only 2017-2023 (7 seasons)
+  2. Random seed: paper does not report seed; using seed = 1 
+  3. Unmeasured confounders: irrigation, canopy, thinning not in data
+  4. PRISM resolution: 4km grid may miss within-vineyard extremes
+  5. Berry dehydration vs accumulation: no berry weight data
+  6. Single variety/region: Cabernet Sauvignon, N. California only
+
+=== Verification Report Complete ===
+Complete run finished successfully at Mon Mar 23 22:18:32 EDT 2026

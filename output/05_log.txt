@@ -1,0 +1,76 @@
+=== Section 6: Bootstrap Random Forest Validation ===
+
+Random seed: 42 
+NOTE: Paper does not report seed; exact TER replication is not possible.
+
+Parameters: ntree=500, mtry=7, n_iter=50, 50:50 split
+Data: 215 observations, 153 features
+
+Running bootstrap iterations:
+  Iteration 10/50: TER = 1.85%
+  Iteration 20/50: TER = 0.93%
+  Iteration 30/50: TER = 1.85%
+  Iteration 40/50: TER = 3.70%
+  Iteration 50/50: TER = 0.93%
+
+=== TER Results ===
+  Mean TER:   1.89%
+  Median TER: 1.85%
+  Max TER:    5.56%
+  Min TER:    0.00%
+  SD TER:     1.24%
+
+Target: mean ~1.35%, max < 2%
+OK: Mean TER is within acceptable range.
+WARNING: Max TER (5.56%) exceeds 2% threshold!
+
+=== Top 20 Features by Mean Decrease Accuracy ===
+   1. Early_total_hwu                          MDA = 6.760
+   2. Early_max_hw_vpd                         MDA = 6.324
+   3. VER_H_avg_hw_vpd                         MDA = 6.225
+   4. VER_H_max_hw_vpd                         MDA = 6.209
+   5. VER_H_total_hwu                          MDA = 6.193
+   6. Early_n_heatwaves                        MDA = 6.084
+   7. VER_H_max_hw_duration                    MDA = 6.003
+   8. Early_avg_hw_duration                    MDA = 5.977
+   9. VER_H_avg_hw_duration                    MDA = 5.968
+  10. VER_H_n_heatwaves                        MDA = 5.842
+  11. BB_H_total_hwu                           MDA = 5.726
+  12. Full_total_hwu                           MDA = 5.629
+  13. BB_H_avg_hw_vpd                          MDA = 5.628
+  14. BB_H_max_hw_vpd                          MDA = 5.604
+  15. Full_max_hw_vpd                          MDA = 5.578
+  16. Late_total_hwu                           MDA = 5.381
+  17. Late_max_hw_vpd                          MDA = 5.322
+  18. VER_H_n_heat_days                        MDA = 5.299
+  19. Late_avg_hw_duration                     MDA = 5.165
+  20. BB_H_max_hw_duration                     MDA = 5.159
+
+=== Verification: Top 8 features ===
+  Top 8 features: Early_total_hwu
+                   Early_max_hw_vpd
+                   VER_H_avg_hw_vpd
+                   VER_H_max_hw_vpd
+                   VER_H_total_hwu
+                   Early_n_heatwaves
+                   VER_H_max_hw_duration
+                   Early_avg_hw_duration 
+  All FL-VER?: NO 
+  WARNING: Only 0 of 8 top features are FL-VER. Expected all 8.
+  NOTE: Minor deviations are expected due to different random seed.
+
+  Features with MDA >= 1%: 130
+  Heat-related: 56 of 130
+
+=== Stress Test: TER across different iteration counts ===
+   50 iterations: mean=1.76%, max=4.63%
+  100 iterations: mean=1.72%, max=6.48%
+  200 iterations: mean=1.91%, max=6.48%
+  300 iterations: mean=1.88%, max=9.26%
+  400 iterations: mean=1.78%, max=8.33%
+  500 iterations: mean=1.72%, max=10.19%
+
+Target: TER must remain below 2%% at all counts, max ~1.63%%
+
+=== Section 6 Complete ===
+Saved to: output/05_rf_validation.RData 

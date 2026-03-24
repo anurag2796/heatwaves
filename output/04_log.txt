@@ -1,0 +1,55 @@
+=== Section 5: Hierarchical Clustering Analysis ===
+
+Running cluster optimisation diagnostics...
+  Saved Supplemental Figure 6 panels to figures/
+  Expected: all three methods converge on k = 3
+
+Running HCA with Ward.D2 linkage, k = 3...
+
+Cluster sizes (raw assignment):
+clusters
+  1   2   3 
+ 36 121  58 
+
+Cluster characteristics for label assignment:
+  cluster_raw   n VER_H_mean_tmax FL_VER_mean_tmax VER_H_n_heat_days
+1           1  36        30.70395         29.94078         4.7222222
+2           2 121        27.65478         28.79177         0.2479339
+3           3  58        28.50485         29.87668         0.6551724
+  FL_VER_n_heat_days Full_n_heat_days
+1          1.5555556        6.2777778
+2          0.7107438        0.9256198
+3          3.4655172        4.0862069
+
+Raw-to-label mapping:
+  Raw 1 -> C1 (POST-V heat)
+  Raw 3 -> C2 (PRE-V heat)
+  Raw 2 -> C3 (Cool baseline)
+
+Final cluster sizes:
+clusters_labelled
+ C1  C2  C3 
+ 36  58 121 
+
+Expected: C1 = 21, C2 = 70, C3 = 124
+  C1: expected=21, actual=36, deviation=71.4% [WARNING]
+  C2: expected=70, actual=58, deviation=17.1% [WARNING]
+  C3: expected=124, actual=121, deviation=2.4% [OK]
+
+Detailed cluster verification:
+  cluster   n VER_H_mean_tmax VER_H_n_heat_days VER_H_max_hw_vpd
+1      C1  36            30.7              4.72              6.7
+2      C2  58            28.5              0.66              0.0
+3      C3 121            27.7              0.25              0.1
+  VER_H_avg_hw_dur FL_VER_mean_tmax FL_VER_n_heat_days
+1              2.8             29.9               1.56
+2              0.0             29.9               3.47
+3              0.0             28.8               0.71
+
+Expected (from paper Table / Section 5c):
+  C1 (POST-V): Tmax avg 42.2°C post-VER, 5.20 heat days, VPD 7.2, dur 3.2
+  C2 (PRE-V):  Tmax avg 40.1°C FL-VER, 2.94 heat days
+  C3 (Cool):   Tmax avg 37.9°C, ~0 heat days
+
+=== Section 5 Complete ===
+Saved to: output/04_clusters.RData 
