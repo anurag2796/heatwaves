@@ -74,9 +74,9 @@ cluster_chars <- feature_df %>%
   summarise(
     n = n(),
     VER_H_mean_tmax    = mean(Tmax_VERtoH, na.rm = TRUE),
-    FL_VER_mean_tmax   = mean(Tmax_BLtoVER, na.rm = TRUE),
+    FL_VER_mean_tmax   = mean(Tmax_FLtoVER, na.rm = TRUE),
     VER_H_n_heat_days  = mean(heat_days_VERtoH, na.rm = TRUE),
-    FL_VER_n_heat_days = mean(heat_days_BLtoVER, na.rm = TRUE),
+    FL_VER_n_heat_days = mean(heat_days_FLtoVER, na.rm = TRUE),
     Full_n_heat_days   = mean(heat_days_100, na.rm = TRUE),
     VER_H_max_hw_vpd   = mean(max_hw_vpd_VERtoH, na.rm = TRUE),
     VER_H_avg_hw_dur   = mean(avg_hw_duration_VERtoH, na.rm = TRUE)

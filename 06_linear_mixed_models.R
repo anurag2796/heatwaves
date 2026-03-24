@@ -1,7 +1,11 @@
 ###############################################################################
 # 06_linear_mixed_models.R
 # Reproduction of Previtali et al. (2026)
-# Section 7: Linear Mixed Models & Non-parametric Fallbacks
+# Section 7: Linear Mixed Models & Nonparametric Robustness Checks
+#
+# P0-1 fix: Always fit LMM unconditionally (as the paper does).
+# Report assumption diagnostics alongside, not as a gate.
+# Run KW as a secondary robustness check.
 ###############################################################################
 
 load("output/01_data_loaded.RData")
@@ -54,7 +58,10 @@ names(fruit_data)[names(fruit_data) == "Block_ID"] <- "block_ID"
 
 cat("Fruit composition data with cluster labels:", nrow(fruit_data), "obs\n")
 
-# --- 7b. Unified Modeling Function (LMM with Non-parametric Fallback) ---
+# --- 7b. Unified Modeling Function ---
+# Always fits LMM (as the paper specifies), reports diagnostics,
+# then shows KW as a nonparametric robustness check.
+
 run_model <- function(var_name, df) {
   cat(sprintf("\n--- Model: %s ---\n", var_name))
   
@@ -73,55 +80,59 @@ run_model <- function(var_name, df) {
   cat(sprintf("  Per cluster: C1=%d, C2=%d, C3=%d\n", 
               sum(df_sub$cluster == "C1"), sum(df_sub$cluster == "C2"), sum(df_sub$cluster == "C3")))
   
-  # Separate formulas: one for Mixed Model, one for simple tests
-  f_lmm <- as.formula(paste(var_name, "~ cluster + (1 | block_ID)"))
+  f_lmm    <- as.formula(paste(var_name, "~ cluster + (1 | block_ID)"))
   f_simple <- as.formula(paste(var_name, "~ cluster"))
   
-  # Try fitting LMM to test assumptions
+  # ---- PRIMARY: Linear Mixed Model (unconditional, as paper specifies) ----
   mod <- tryCatch(lmer(f_lmm, data = df_sub), error = function(e) NULL)
   
-  if (is.null(mod)) {
-    cat("  => LMM failed to converge. Switching to nonparametric (Kruskal-Wallis).\n")
-    assumption_failed <- TRUE
-  } else {
+  if (!is.null(mod)) {
+    # Assumption diagnostics (reported but NOT used as a gate)
     res <- residuals(mod)
-    sw <- shapiro.test(res[sample(length(res), min(5000, length(res)))])
+    n_sample <- min(5000, length(res))
+    sw  <- shapiro.test(res[sample(length(res), n_sample)])
+    lev <- tryCatch(leveneTest(f_simple, data = df_sub), error = function(e) NULL)
     
-    # CRITICAL FIX: Pass the simple formula without random effects to leveneTest
-    lev <- leveneTest(f_simple, data = df_sub)
-    
-    cat(sprintf("  Shapiro-Wilk: W=%.4f, p=%.4f  |  Levene: F=%.2f, p=%.4f\n", 
-                sw$statistic, sw$p.value, lev$`F value`[1], lev$`Pr(>F)`[1]))
-    
-    assumption_failed <- (sw$p.value < 0.05 || lev$`Pr(>F)`[1] < 0.05)
-  }
-  
-  # Check assumptions (alpha = 0.05)
-  if(assumption_failed) {
-    cat("  => Assumptions VIOLATED. Switching to nonparametric (Kruskal-Wallis).\n")
-    
-    kw <- kruskal.test(f_simple, data = df_sub)
-    cat(sprintf("  Kruskal-Wallis test: chi-squared = %.2f, p = %.4f\n", kw$statistic, kw$p.value))
-    
-    if (kw$p.value < 0.05) {
-      wt <- pairwise.wilcox.test(df_sub[[var_name]], df_sub$cluster, p.adjust.method = "none", exact = FALSE)
-      cat("  Pairwise Wilcoxon rank-sum tests (uncorrected p-values):\n")
-      print(round(wt$p.value, 4))
-    } else {
-      cat("  Factor not significant.\n")
+    cat(sprintf("  Assumption diagnostics (informational):\n"))
+    cat(sprintf("    Shapiro-Wilk: W=%.4f, p=%.4f\n", sw$statistic, sw$p.value))
+    if (!is.null(lev)) {
+      cat(sprintf("    Levene:       F=%.2f, p=%.4f\n", lev$`F value`[1], lev$`Pr(>F)`[1]))
     }
-  } else {
-    cat("  => Assumptions MET. Proceeding with LMM.\n")
+    
+    if (sw$p.value < 0.05) {
+      cat("    Note: residuals depart from normality, but LMMs are robust with large N.\n")
+    }
+    
+    # LMM ANOVA
     an <- anova(mod)
-    cat(sprintf("  LMM ANOVA: F = %.2f, p = %.4f\n", an$`F value`[1], an$`Pr(>F)`[1]))
+    cat(sprintf("\n  LMM ANOVA: F = %.2f, p = %.6f\n", an$`F value`[1], an$`Pr(>F)`[1]))
     
     if (an$`Pr(>F)`[1] < 0.05) {
+      cat("  => Cluster effect SIGNIFICANT. Tukey post-hoc:\n")
       em <- emmeans(mod, pairwise ~ cluster, adjust = "tukey")
-      cat("  Tukey Pairwise Comparisons:\n")
       print(em$contrasts)
+    } else {
+      cat("  => Cluster effect NOT significant (p >= 0.05).\n")
     }
+  } else {
+    cat("  [WARNING] LMM failed to converge. Reporting KW only.\n")
   }
   
+  # ---- SECONDARY: Kruskal-Wallis robustness check ----
+  cat("\n  Nonparametric robustness check (Kruskal-Wallis):\n")
+  kw <- kruskal.test(f_simple, data = df_sub)
+  cat(sprintf("    chi-squared = %.2f, p = %.6f\n", kw$statistic, kw$p.value))
+  
+  if (kw$p.value < 0.05) {
+    wt <- pairwise.wilcox.test(df_sub[[var_name]], df_sub$cluster, 
+                                p.adjust.method = "BH", exact = FALSE)
+    cat("    Pairwise Wilcoxon (BH-adjusted):\n")
+    print(round(wt$p.value, 4))
+  } else {
+    cat("    Factor not significant.\n")
+  }
+  
+  # ---- Group summary ----
   cat("\n  Group means and medians:\n")
   summ <- df_sub %>% 
     group_by(cluster) %>% 

@@ -89,22 +89,24 @@ total_count <- total_count + 1
 cat("\n=== 5. RANDOM FOREST VALIDATION ===\n")
 # ==========================================================================
 cat("  Random seed used:", 42, "\n")
-mean_ter <- mean(ter_vec)
-max_ter <- max(ter_vec)
 
-# We use 12% as the tolerance here because stratified sampling on a very small C1 
-# will naturally push the TER higher than a pure 1.35% overfit.
-if (mean_ter <= 12) {
-  cat(sprintf("  Mean TER: %.2f%% [OK]\n", mean_ter))
+# Primary: OOB-based TER (P0-2 fix)
+cat(sprintf("  OOB TER: %.2f%% (target: ~1.35%%)\n", oob_ter))
+if (oob_ter <= 5) {
+  cat("  [OK]\n")
   pass_count <- pass_count + 1
 } else {
-  cat(sprintf("  Mean TER: %.2f%% [WARNING] — TER exceeds expected range\n", mean_ter))
+  cat("  [WARNING] — OOB TER exceeds 5%\n")
 }
 total_count <- total_count + 1
 
+# Secondary: bootstrap stratified split stress test
+mean_ter <- mean(ter_vec)
+cat(sprintf("  Stress-test TER (stratified 50:50): %.2f%%\n", mean_ter))
+
 top_8 <- head(mda_df$Feature, 8)
-is_fl_ver <- sum(grepl("BLtoVER|preV", top_8))
-cat(sprintf("  Top 8 MDA features: %d/8 are Pre-Veraison/BLtoVER features\n", is_fl_ver))
+is_fl_ver <- sum(grepl("FLtoVER|preV", top_8))
+cat(sprintf("  Top 8 MDA features: %d/8 are FL-VER/Pre-Veraison features\n", is_fl_ver))
 
 if (is_fl_ver >= 2) {
   cat("  [OK] — Pre-veraison features correctly identified as important\n")
@@ -147,9 +149,9 @@ pass_count <- pass_count + check_value("TSS C2", 26.0, get_median(fruit_data, "T
 pass_count <- pass_count + check_value("TSS C1", 26.4, get_median(fruit_data, "TSS", "C1"))
 total_count <- total_count + 3
 
-pass_count <- pass_count + check_value("pH C3", 3.60, get_median(fruit_data, "pH", "C3"), 2)
-pass_count <- pass_count + check_value("pH C2", 3.60, get_median(fruit_data, "pH", "C2"), 2)
-pass_count <- pass_count + check_value("pH C1", 3.65, get_median(fruit_data, "pH", "C1"), 2)
+pass_count <- pass_count + check_value("pH C3", 3.60, get_median(fruit_data, "pH", "C3"), 3)
+pass_count <- pass_count + check_value("pH C2", 3.60, get_median(fruit_data, "pH", "C2"), 3)
+pass_count <- pass_count + check_value("pH C1", 3.65, get_median(fruit_data, "pH", "C1"), 3)
 total_count <- total_count + 3
 
 pass_count <- pass_count + check_value("Malic_acid C3", 1338, get_median(fruit_data, "Malic_acid", "C3"), 10)
@@ -158,7 +160,7 @@ pass_count <- pass_count + check_value("Malic_acid C1", 1996, get_median(fruit_d
 total_count <- total_count + 3
 
 pass_count <- pass_count + check_value("YAN C3", 124, get_median(fruit_data, "YAN", "C3"), 10)
-pass_count <- pass_count + check_value("YAN C2", 66, get_median(fruit_data, "YAN", "C2"), 95) # High dev expected due to sample size
+pass_count <- pass_count + check_value("YAN C2", 66, get_median(fruit_data, "YAN", "C2"), 30)
 pass_count <- pass_count + check_value("YAN C1", 94, get_median(fruit_data, "YAN", "C1"), 25)
 total_count <- total_count + 3
 

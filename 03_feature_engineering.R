@@ -14,7 +14,7 @@ suppressPackageStartupMessages({
 
 cat("=== Section 4: Feature Engineering ===\n\n")
 
-HEAT_THRESHOLD <- 37.99
+HEAT_THRESHOLD <- 38.0  # Paper: "days with Tmax >= 38 degC"
 
 # --- Helper 1: Compute generic metrics for a given subset ---
 compute_generic <- function(w) {
@@ -204,24 +204,24 @@ feature_names <- c(
   "no_hw_june", "no_hw_july", "no_hw_aug", "no_hw_sep", "no_hw_preV", "no_hw_postV", "no_hw",
   "avg_hw_duration", "max_hw_duration", "tot_hw_hwu", "avg_hw_hwu", "avg_hw_vpd", "max_hw_vpd",
   "hw_hwu_june", "hw_hwu_july", "hw_hwu_aug", "hw_hwu_sep", "hw_hwu_preV", "hw_hwu_postV",
-  "Tmax_BBtoBL", "Tmax_BLtoVER", "Tmax_VERtoH", "Tmax_BBtoH",
-  "Tmean_BBtoBL", "Tmean_BLtoVER", "Tmean_VERtoH", "Tmean_BBtoH",
-  "Tmin_BBtoBL", "Tmin_BLtoVER", "Tmin_VERtoH", "Tmin_BBtoH",
-  "rain_BBtoBL", "rain_BLtoVER", "rain_VERtoH", "rain_BBtoH",
-  "fdays_BBtoBL", "fdays_BLtoVER", "fdays_VERtoH", "fdays_BBtoH",
-  "frost_BBtoBL", "frost_BLtoVER", "frost_VERtoH", "frost_BBtoH",
-  "hwu_BBtoBL", "hwu_BLtoVER", "hwu_VERtoH", "hwu_BBtoH",
-  "vpdmax_BBtoBL", "vpdmax_BLtoVER", "vpdmax_VERtoH", "vpdmax_BBtoH",
-  "vpdavg_BBtoBL", "vpdavg_BLtoVER", "vpdavg_VERtoH", "vpdavg_BBtoH",
-  "vpdmin_BBtoBL", "vpdmin_BLtoVER", "vpdmin_VERtoH", "vpdmin_BBtoH",
-  "no_hw_BLtoVER", "no_hw_VERtoH", "no_hw_BBtoH",
-  "avg_hw_duration_BLtoVER", "avg_hw_duration_VERtoH", "avg_hw_duration_BBtoH",
-  "max_hw_duration_BLtoVER", "max_hw_duration_VERtoH", "max_hw_duration_BBtoH",
-  "tot_hw_hwu_BLtoVER", "tot_hw_hwu_VERtoH", "tot_hw_hwu_BBtoH",
-  "avg_hw_hwu_BLtoVER", "avg_hw_hwu_VERtoH", "avg_hw_hwu_BBtoH",
-  "avg_hw_vpd_BLtoVER", "avg_hw_vpd_VERtoH", "avg_hw_vpd_BBtoH",
-  "max_hw_vpd_BLtoVER", "max_hw_vpd_VERtoH", "max_hw_vpd_BBtoH",
-  "heat_days_BLtoVER", "heat_days_VERtoH", "heat_days_BBtoH"
+  "Tmax_BBtoFL", "Tmax_FLtoVER", "Tmax_VERtoH", "Tmax_BBtoH",
+  "Tmean_BBtoFL", "Tmean_FLtoVER", "Tmean_VERtoH", "Tmean_BBtoH",
+  "Tmin_BBtoFL", "Tmin_FLtoVER", "Tmin_VERtoH", "Tmin_BBtoH",
+  "rain_BBtoFL", "rain_FLtoVER", "rain_VERtoH", "rain_BBtoH",
+  "fdays_BBtoFL", "fdays_FLtoVER", "fdays_VERtoH", "fdays_BBtoH",
+  "frost_BBtoFL", "frost_FLtoVER", "frost_VERtoH", "frost_BBtoH",
+  "hwu_BBtoFL", "hwu_FLtoVER", "hwu_VERtoH", "hwu_BBtoH",
+  "vpdmax_BBtoFL", "vpdmax_FLtoVER", "vpdmax_VERtoH", "vpdmax_BBtoH",
+  "vpdavg_BBtoFL", "vpdavg_FLtoVER", "vpdavg_VERtoH", "vpdavg_BBtoH",
+  "vpdmin_BBtoFL", "vpdmin_FLtoVER", "vpdmin_VERtoH", "vpdmin_BBtoH",
+  "no_hw_FLtoVER", "no_hw_VERtoH", "no_hw_BBtoH",
+  "avg_hw_duration_FLtoVER", "avg_hw_duration_VERtoH", "avg_hw_duration_BBtoH",
+  "max_hw_duration_FLtoVER", "max_hw_duration_VERtoH", "max_hw_duration_BBtoH",
+  "tot_hw_hwu_FLtoVER", "tot_hw_hwu_VERtoH", "tot_hw_hwu_BBtoH",
+  "avg_hw_hwu_FLtoVER", "avg_hw_hwu_VERtoH", "avg_hw_hwu_BBtoH",
+  "avg_hw_vpd_FLtoVER", "avg_hw_vpd_VERtoH", "avg_hw_vpd_BBtoH",
+  "max_hw_vpd_FLtoVER", "max_hw_vpd_VERtoH", "max_hw_vpd_BBtoH",
+  "heat_days_FLtoVER", "heat_days_VERtoH", "heat_days_BBtoH"
 )
 
 colnames(feature_matrix) <- feature_names
